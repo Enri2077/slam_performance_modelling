@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+    <arg name="configuration" />
+    <arg name="pid_father" />
+    <arg name="run_output_folder" />
+
+    <node pkg="slam_performance_modelling" type="slam_benchmark_supervisor_node" name="slam_benchmark_supervisor" output="screen" >
+        <rosparam file="$(arg configuration)" />
+        <param name="pid_father"        value="$(arg pid_father)"        type="int" />
+        <param name="run_output_folder" value="$(arg run_output_folder)" type="string" />
+    </node>
+
+</launch> 

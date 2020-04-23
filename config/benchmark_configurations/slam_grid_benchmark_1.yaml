@@ -1,0 +1,9 @@
+supervisor_component: slam_benchmark_supervisor
+supervisor_configuration: slam_benchmark_supervisor/slam_benchmark_supervisor.yaml
+
+components_configurations:
+  gmapping:
+    #- gmapping/gmapping_22.yaml
+    - gmapping/gmapping_23.yaml
+  move_base: [move_base/move_base_1.yaml]
+  explore_lite: [explore_lite/explore_lite_1.yaml]

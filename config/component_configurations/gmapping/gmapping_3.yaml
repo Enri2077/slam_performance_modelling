@@ -1,0 +1,21 @@
+particles: 80  # high
+delta: 0.05    # low
+maxUrange: 30  # high
+
+xmin: -3
+ymin: -3
+ymax: 3
+xmax: 3
+ogain: 3.0
+minimumScore: 0
+angularUpdate: 0.25
+linearUpdate: 1.0
+map_update_interval: 5.0
+temporal_update: 5.0
+odom_frame: odom
+srr: 0.01
+srt: 0.02
+str: 0.01
+stt: 0.02
+maxRange: 60
+tf_delay: 0.0

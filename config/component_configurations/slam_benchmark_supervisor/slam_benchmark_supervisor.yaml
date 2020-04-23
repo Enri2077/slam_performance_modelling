@@ -1,0 +1,15 @@
+run_timeout: 10800.0
+map_snapshot_period: 30.0
+ps_snapshot_period: 10.0
+map_steady_state_period: 600.0
+map_change_threshold: 10.0
+map_size_change_threshold: 5.0
+map_occupied_threshold: 65
+map_free_threshold: 25
+write_base_link_poses_period: 0.1
+exploration_finished_topic: /explorer/exploration_finished
+base_link_ground_truth_topic: /base_pose_ground_truth
+gmapping_correction_topic: /gmapping/correction
+cmd_vel_topic: /cmd_vel
+map_topic: /map
+scan_topic: /base_scan

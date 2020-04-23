@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <name>slam_performance_modelling</name>
+  <version>0.1.0</version>
+  <description>Executing benchmarks with 2d SLAM to model performance of components</description>
+
+  <maintainer email="enrico.piazza@polimi.it">Enrico Piazza</maintainer>
+  <author email="enrico.piazza@polimi.it">Enrico Piazza</author>
+  <license>BSD license</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>roslaunch</run_depend>
+
+</package>

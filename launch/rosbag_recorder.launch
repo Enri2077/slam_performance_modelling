@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <arg name="bag_file_path" />
+    <arg name="output" />
+
+	<node name="recorder" pkg="rosbag" type="record" args="--lz4 -O $(arg bag_file_path) /explorer/exploration_finished /gmapping/correction /cmd_vel /base_pose_ground_truth /odom /base_scan /map /map_metadata /tf" output="$(arg output)" />
+
+</launch>

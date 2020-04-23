@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <arg name="configuration" />
+    <arg name="output" />
+
+    <node pkg="move_base" type="move_base" respawn="true" name="move_base" output="$(arg output)" >
+        <rosparam file="$(arg configuration)" />
+    </node>
+
+</launch>
