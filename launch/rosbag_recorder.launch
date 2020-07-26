@@ -2,8 +2,9 @@
 <launch>
 
     <arg name="bag_file_path" />
-    <arg name="output" />
+    <arg name="topics" />
+    <arg name="output" default="screen"/>
 
-	<node name="recorder" pkg="rosbag" type="record" args="--lz4 -O $(arg bag_file_path) /explorer/exploration_finished /gmapping/correction /cmd_vel /base_pose_ground_truth /odom /base_scan /map /map_metadata /tf" output="$(arg output)" />
+	<node name="$(anon recorder)" pkg="rosbag" type="record" args="--lz4 -O $(arg bag_file_path) $(arg topics)" output="$(arg output)" />
 
 </launch>

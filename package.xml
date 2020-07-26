@@ -2,14 +2,18 @@
 <package>
   <name>slam_performance_modelling</name>
   <version>0.1.0</version>
-  <description>Executing benchmarks with 2d SLAM to model performance of components</description>
+  <description>This is my ROS python package.</description>
 
   <maintainer email="enrico.piazza@polimi.it">Enrico Piazza</maintainer>
   <author email="enrico.piazza@polimi.it">Enrico Piazza</author>
   <license>BSD license</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
 
+  <run_depend>rospy</run_depend>
   <run_depend>roslaunch</run_depend>
-
+  <run_depend>std_msgs</run_depend>
+  
 </package>

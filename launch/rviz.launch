@@ -2,8 +2,12 @@
 <launch>
 
     <arg name="headless" />
-    <arg name="output" />
+    <arg name="output" default="log" />
 
-    <node name="rviz" pkg="rviz" type="rviz" unless="$(arg headless)" output="$(arg output)" />
+    <node name="rviz"
+          pkg="rviz"
+          type="rviz"
+          unless="$(arg headless)"
+          output="$(arg output)" />
 
 </launch>

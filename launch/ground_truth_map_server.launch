@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <arg name="map"/>
+  <arg name="map_topic" default="/map_gt"/>
+
+  <arg name="output" default="screen"/>
+
+  <node name="map_server_gt"
+        pkg="map_server"
+        type="map_server"
+        output="$(arg output)"
+        args="$(arg map)">
+    <remap from="/map" to="$(arg map_topic)"/>
+  </node>
+
+</launch>

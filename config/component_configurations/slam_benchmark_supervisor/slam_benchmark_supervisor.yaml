@@ -1,15 +1,29 @@
-run_timeout: 10800.0
-map_snapshot_period: 30.0
+# run parameters
+initial_pose_std_xy: 0.2
+initial_pose_std_theta: 0.2617
+goal_tolerance: 0.4
+run_timeout: 3000.0
+waypoint_timeout: 600
 ps_snapshot_period: 10.0
-map_steady_state_period: 600.0
-map_change_threshold: 10.0
-map_size_change_threshold: 5.0
-map_occupied_threshold: 65
-map_free_threshold: 25
-write_base_link_poses_period: 0.1
-exploration_finished_topic: /explorer/exploration_finished
-base_link_ground_truth_topic: /base_pose_ground_truth
-gmapping_correction_topic: /gmapping/correction
-cmd_vel_topic: /cmd_vel
-map_topic: /map
-scan_topic: /base_scan
+write_estimated_poses_period: 0.1
+robot_radius: 0.2
+
+# topic names
+scan_topic: /scan
+amcl_particles_topic: /particlecloud
+estimated_pose_correction_topic: /gmapping_pose
+ground_truth_pose_topic: /base_footprint_gt
+
+# service names
+save_map_service: /slam_toolbox/save_map
+serialize_map_service: /slam_toolbox/serialize_map
+
+# action names
+navigate_to_pose_action: /move_base
+
+# frame names
+fixed_frame: map
+robot_base_frame: base_link_realistic
+
+# gazebo entity names
+robot_entity_name: robot
