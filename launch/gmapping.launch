@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <arg name="params_file" />
+
+    <arg name="output" default="screen"/>
+    <arg name="scan_topic" default="/scan" />
+
+    <node name="gmapping"
+          pkg="gmapping"
+          type="slam_gmapping"
+          output="$(arg output)" >
+        <remap from="scan" to="$(arg scan_topic)"/>
+        <rosparam file="$(arg params_file)" />
+    </node>
+
+</launch>

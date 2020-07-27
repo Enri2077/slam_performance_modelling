@@ -104,24 +104,20 @@ class BenchmarkRun(object):
             yaml.dump(supervisor_configuration, supervisor_configuration_file, default_flow_style=False)
 
         if self.slam_node == 'gmapping':
-            pass  # TODO
-            # # copy the configuration of amcl to the run folder and update its parameters
-            # with open(original_amcl_configuration_path) as original_amcl_configuration_file:
-            #     amcl_configuration = yaml.safe_load(original_amcl_configuration_file)
-            # amcl_configuration['alpha1'] = beta_1**2
-            # amcl_configuration['alpha2'] = beta_2**2
-            # amcl_configuration['alpha3'] = beta_3**2
-            # amcl_configuration['alpha4'] = beta_4**2
-            # # amcl_configuration['laser_max_range'] = laser_scan_max_range
-            # if not path.exists(path.dirname(self.amcl_configuration_path)):
-            #     os.makedirs(path.dirname(self.amcl_configuration_path))
-            # with open(self.amcl_configuration_path, 'w') as amcl_configuration_file:
-            #     yaml.dump(amcl_configuration, amcl_configuration_file, default_flow_style=False)
-            #
-            # # copy the configuration of move_base to the run folder
-            # if not path.exists(path.dirname(self.move_base_configuration_path)):
-            #     os.makedirs(path.dirname(self.move_base_configuration_path))
-            # shutil.copyfile(original_move_base_configuration_path, self.move_base_configuration_path)
+            # copy the configuration of gmapping to the run folder and update its parameters
+            with open(original_gmapping_configuration_path) as original_gmapping_configuration_file:
+                gmapping_configuration = yaml.safe_load(original_gmapping_configuration_file)
+            gmapping_configuration['stt'] = max(0.005, beta_1)  # rad/rad, Odometry error in rotation as a function of rotation (theta/theta)
+            gmapping_configuration['str'] = max(0.005, beta_2)  # rad/m, Odometry error in rotation as a function of translation (theta/rho)
+            gmapping_configuration['srr'] = max(0.005, beta_3)  # m/m, Odometry error in translation as a function of translation (rho/rho)
+            gmapping_configuration['srt'] = max(0.005, beta_4)  # m/rad, Odometry error in translation as a function of rotation (rho/theta)
+            gmapping_configuration['delta'] = map_resolution
+            gmapping_configuration['maxUrange'] = laser_scan_max_range
+            if not path.exists(path.dirname(self.gmapping_configuration_path)):
+                os.makedirs(path.dirname(self.gmapping_configuration_path))
+            with open(self.gmapping_configuration_path, 'w') as gmapping_configuration_file:
+                yaml.dump(gmapping_configuration, gmapping_configuration_file, default_flow_style=False)
+
         elif self.slam_node == 'slam_toolbox':
             # copy the configuration of slam_toolbox to the run folder and update its parameters
             with open(original_slam_toolbox_configuration_path) as original_slam_toolbox_configuration_file:
@@ -134,12 +130,13 @@ class BenchmarkRun(object):
             with open(self.slam_toolbox_configuration_path, 'w') as slam_toolbox_configuration_file:
                 yaml.dump(slam_toolbox_configuration, slam_toolbox_configuration_file, default_flow_style=False)
 
-            # copy the configuration of move_base to the run folder
-            if not path.exists(path.dirname(self.move_base_configuration_path)):
-                os.makedirs(path.dirname(self.move_base_configuration_path))
-            shutil.copyfile(original_move_base_configuration_path, self.move_base_configuration_path)
         else:
             raise ValueError()
+
+        # copy the configuration of move_base to the run folder
+        if not path.exists(path.dirname(self.move_base_configuration_path)):
+            os.makedirs(path.dirname(self.move_base_configuration_path))
+        shutil.copyfile(original_move_base_configuration_path, self.move_base_configuration_path)
 
         # copy the configuration of the gazebo world model to the run folder and update its parameters
         gazebo_original_world_model_tree = et.parse(original_gazebo_world_model_path)
@@ -274,7 +271,7 @@ class BenchmarkRun(object):
         }
         recorder_benchmark_data_params = {
             'bag_file_path': path.join(self.run_output_folder, "benchmark_data.bag"),
-            'topics': "/base_footprint_gt /cmd_vel /initialpose /map_gt /map_gt_metadata /map_gt_updates /map /map_metadata /map_updates /odom /particlecloud /rosout /rosout_agg /scan /scan_gt /tf /tf_static /traversal_path",
+            'topics': "/base_footprint_gt /cmd_vel /initialpose /map_gt /map_gt_metadata /map_gt_updates /map /map_metadata /map_updates /odom /particlecloud /gmapping/entropy /rosout /rosout_agg /scan /scan_gt /tf /tf_static /traversal_path",
         }
 
         # declare components

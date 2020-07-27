@@ -224,7 +224,7 @@ class SlamBenchmarkSupervisor:
         self.publish_traversal_path()
 
         self.num_goals = len(self.traversal_path_poses)
-        
+
         time.sleep(5.0)
         self.write_event('run_start')
         self.run_started = True
