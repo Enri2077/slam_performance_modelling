@@ -170,7 +170,7 @@ class SlamBenchmarkSupervisor:
                 waiting_time = 0.0
 
         # get deleaved reduced Voronoi graph from ground truth map
-        voronoi_graph = self.ground_truth_map.deleaved_reduced_voronoi_graph(minimum_radius=2*self.robot_radius).copy()
+        voronoi_graph = self.ground_truth_map.deleaved_reduced_voronoi_graph(minimum_radius=1.5*self.robot_radius).copy()
         minimum_length_paths = nx.all_pairs_dijkstra_path(voronoi_graph, weight='voronoi_path_distance')
         minimum_length_costs = dict(nx.all_pairs_dijkstra_path_length(voronoi_graph, weight='voronoi_path_distance'))
         costs = defaultdict(dict)
@@ -323,7 +323,7 @@ class SlamBenchmarkSupervisor:
         print_error("terminating supervisor due to timeout, terminating run")
         self.write_event('run_timeout')
         self.write_event('supervisor_finished')
-        raise RunFailException("run_timeout")
+        rospy.signal_shutdown("run_timeout")
 
     def scan_callback(self, laser_scan_msg):
         self.received_first_scan = True
