@@ -34,6 +34,7 @@ RUN \
     ros-melodic-robot-state-publisher \
     ros-melodic-map-server \
     ros-melodic-slam-toolbox \
+    ros-melodic-gmapping \
     ros-melodic-amcl \
     ros-melodic-move-base \
     ros-melodic-global-planner \
