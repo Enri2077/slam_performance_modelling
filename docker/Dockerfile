@@ -36,7 +36,9 @@ RUN \
     ros-melodic-slam-toolbox \
     ros-melodic-amcl \
     ros-melodic-move-base \
+    ros-melodic-global-planner \
     ros-melodic-dwa-local-planner \
+    ros-melodic-tf2-sensor-msgs \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -61,7 +63,7 @@ RUN \
   git clone --branch=melodic-devel https://github.com/Enri2077/slam_performance_modelling.git && \
   git clone --branch=melodic-devel https://github.com/Enri2077/ground_truth_mapping.git && \
   git clone --branch=melodic-devel https://github.com/Enri2077/gazebo_ros_pkgs.git && \
-  git clone --branch=melodic-ground-truth-mapping https://github.com/Enri2077/slam_toolbox.git
+  git clone --branch=melodic-devel https://github.com/Enri2077/escape_lethal_cost_recovery_behavior.git
 
 
 # build workspace and install python user packages

@@ -4,20 +4,20 @@ base_global_planner: global_planner/GlobalPlanner  # The name of the plugin for 
 shutdown_costmaps: false
 controller_frequency: 5.0
 planner_patience: 5.0
-controller_patience: 15.0
+controller_patience: 5.0
 conservative_reset_dist: 3.0
 planner_frequency: 0.5
 oscillation_timeout: 10.0
 oscillation_distance: 0.2
+
+clearing_rotation_allowed: true
+recovery_behavior_enabled: true
 
 local_costmap:
   obstacle_range: 3.0
   raytrace_range: 3.5
 
   robot_radius: 0.24
-
-  inflation_radius: 1.0
-  cost_scaling_factor: 5.0
 
   global_frame: map
   robot_base_frame: base_footprint_gt
@@ -27,8 +27,8 @@ local_costmap:
   transform_tolerance: 0.5
 
   rolling_window: true
-  width: 5
-  height: 5
+  width: 2
+  height: 2
   resolution: 0.05
 
   plugins:  # Sequence of plugin specifications, one per layer. Each specification is a dictionary with name and type fields.
@@ -38,14 +38,14 @@ local_costmap:
   static_layer:  # http://wiki.ros.org/costmap_2d/hydro/staticmap#Parameters
     enabled: true
     map_topic: /map_gt
-    subscribe_to_updates: true  # default: false  # In addition to map_topic, also subscribe to map_topic + "_updates"
+    subscribe_to_updates: false  # default: false  # In addition to map_topic, also subscribe to map_topic + "_updates"
     track_unknown_space: false  # default: true  # If true, unknown values in the map messages are translated directly to the layer. Otherwise, unknown values in the map message are translated as FREE_SPACE in the layer.
     unknown_cost_value: -1  # default: -1  # The value for which a cost should be considered unknown when reading in a map from the map server. If the costmap is not tracking unknown space, costs of this value will be considered occupied. A value of zero also results in this parameter being unused.
 
   inflation_layer:  # http://wiki.ros.org/costmap_2d/hydro/inflation#Parameters
     enabled: true
     cost_scaling_factor: 7.5 # default: 10  # A scaling factor to apply to cost values during inflation. The cost function is computed as follows for all cells in the costmap further than the inscribed radius distance and closer than the inflation radius distance away from an actual obstacle: exp(-1.0 * cost_scaling_factor * (distance_from_obstacle - inscribed_radius)) * (costmap_2d::INSCRIBED_INFLATED_OBSTACLE - 1), where costmap_2d::INSCRIBED_INFLATED_OBSTACLE is currently 254. NOTE: since the cost_scaling_factor is multiplied by a negative in the formula, increasing the factor will decrease the resulting cost values.
-    inflation_radius: 0.3 # default: 0.55  # The radius in meters to which the map inflates obstacle cost values.
+    inflation_radius: 0.4 # default: 0.55  # The radius in meters to which the map inflates obstacle cost values.
 
 
 DWAPlannerROS:
@@ -80,8 +80,8 @@ DWAPlannerROS:
   controller_frequency: 10.0
 
   path_distance_bias: 1.0
-  goal_distance_bias: 50.0
-  occdist_scale: 0.5
+  goal_distance_bias: 30.0
+  occdist_scale: 0.1
   forward_point_distance: 0.1
   stop_time_buffer: 0.2
   scaling_speed: 10.0
@@ -98,7 +98,7 @@ global_costmap:
 
   robot_radius: 0.24
 
-  inflation_radius: 1.0
+  inflation_radius: 0.4
   cost_scaling_factor: 3.0
 
   global_frame: map
@@ -137,9 +137,9 @@ GlobalPlanner:
   default_tolerance: 0.0  # default: 0.0  # A tolerance on the goal point for the planner. The planner will attempt to create a plan that is as close to the specified goal as possible but no further than default_tolerance away.
   use_dijkstra: true   # default: true  # If true, use dijkstra's algorithm. Otherwise, A*.
   use_quadratic: true  # default: true  # If true, use the quadratic approximation of the potential. Otherwise, use a simpler calculation.
-  use_grid_path: false  # default: false  # If true, create a path that follows the grid boundaries. Otherwise, use a gradient descent method.
-  old_navfn_behavior: false  # default: false  # If for some reason, you want global_planner to exactly mirror the behavior of navfn, set this to true (and use the defaults for the other boolean parameters)
-  lethal_cost: 250  # default: 253  # Lethal Cost (dynamic reconfigure)
+  use_grid_path: true  # default: false  # If true, create a path that follows the grid boundaries. Otherwise, use a gradient descent method.
+  old_navfn_behavior: true  # default: false  # If for some reason, you want global_planner to exactly mirror the behavior of navfn, set this to true (and use the defaults for the other boolean parameters)
+  lethal_cost: 253  # default: 253  # Lethal Cost (dynamic reconfigure)
   neutral_cost: 50  # default: 50  # Neutral Cost (dynamic reconfigure)
   cost_factor: 3.0  # default: 3.0  # Factor to multiply each cost from costmap by (dynamic reconfigure)
   publish_potential: true  # default: true  # Publish Potential Costmap (dynamic reconfigure)
