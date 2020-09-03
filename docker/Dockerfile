@@ -23,6 +23,10 @@ RUN \
     python3-psutil \
     python-pip \
     python3-pip \
+    python-skimage \
+    python3-skimage \
+    python-sklearn \
+    python3-sklearn \
     python-catkin-tools \
     ros-melodic-catkin \
     ros-melodic-gazebo-ros \
@@ -76,7 +80,9 @@ RUN \
   pip install pyquaternion && \
   pip3 install pyquaternion && \
   pip install networkx && \
-  pip3 install networkx
+  pip3 install networkx && \
+  pip install scikit-image && \
+  pip3 install scikit-image
 
 RUN \
   cd ~/w/catkin_ws/src/performance_modelling/ && \
