@@ -43,6 +43,7 @@ RUN \
     ros-melodic-move-base \
     ros-melodic-global-planner \
     ros-melodic-dwa-local-planner \
+    ros-melodic-tf-conversions \
     ros-melodic-tf2-sensor-msgs \
     && rm -rf /var/lib/apt/lists/*
 
