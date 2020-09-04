@@ -45,6 +45,7 @@ RUN \
     ros-melodic-dwa-local-planner \
     ros-melodic-tf-conversions \
     ros-melodic-tf2-sensor-msgs \
+    && apt upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 
