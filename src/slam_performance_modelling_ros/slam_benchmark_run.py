@@ -48,6 +48,9 @@ class BenchmarkRun(object):
         laser_scan_fov_rad = laser_scan_fov_deg*np.pi/180
         map_resolution = self.run_parameters['map_resolution']
         ceres_loss_function = self.run_parameters['ceres_loss_function'] if self.slam_node == 'slam_toolbox' else None
+        num_particles = self.run_parameters['particles'] if self.slam_node == 'gmapping' else None
+        linear_update = self.run_parameters['linear_update']
+        angular_update = self.run_parameters['angular_update']
 
         # run variables
         self.aborted = False
@@ -111,6 +114,9 @@ class BenchmarkRun(object):
             gmapping_configuration['str'] = max(0.005, beta_2)  # rad/m, Odometry error in rotation as a function of translation (theta/rho)
             gmapping_configuration['srr'] = max(0.005, beta_3)  # m/m, Odometry error in translation as a function of translation (rho/rho)
             gmapping_configuration['srt'] = max(0.005, beta_4)  # m/rad, Odometry error in translation as a function of rotation (rho/theta)
+            gmapping_configuration['num_particles'] = num_particles
+            gmapping_configuration['linearUpdate'] = linear_update
+            gmapping_configuration['angularUpdate'] = angular_update
             gmapping_configuration['delta'] = map_resolution
             gmapping_configuration['maxUrange'] = laser_scan_max_range
             if not path.exists(path.dirname(self.gmapping_configuration_path)):
@@ -123,6 +129,8 @@ class BenchmarkRun(object):
             with open(original_slam_toolbox_configuration_path) as original_slam_toolbox_configuration_file:
                 slam_toolbox_configuration = yaml.safe_load(original_slam_toolbox_configuration_file)
             slam_toolbox_configuration['ceres_loss_function'] = ceres_loss_function
+            slam_toolbox_configuration['minimum_travel_distance'] = linear_update
+            slam_toolbox_configuration['minimum_travel_heading'] = angular_update
             slam_toolbox_configuration['max_laser_range'] = laser_scan_max_range
             slam_toolbox_configuration['resolution'] = map_resolution
             if not path.exists(path.dirname(self.slam_toolbox_configuration_path)):

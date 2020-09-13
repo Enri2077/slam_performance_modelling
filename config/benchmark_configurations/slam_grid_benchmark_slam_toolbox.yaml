@@ -13,6 +13,8 @@ components_configuration:
 combinatorial_parameters:
   slam_node: [slam_toolbox]
   ceres_loss_function: [None, HuberLoss, CauchyLoss]
+  linear_update: [0.2]
+  angular_update: [0.1]
   beta: [[0.0, 0.0, 0.0, 0.0], [0.035, 0.035, 0.01, 0.01]]
   laser_scan_max_range: [30.0]
   laser_scan_fov_deg: [90, 180, 270, 359]
