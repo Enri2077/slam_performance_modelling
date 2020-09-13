@@ -170,7 +170,7 @@ class SlamBenchmarkSupervisor:
                 waiting_time = 0.0
 
         # get deleaved reduced Voronoi graph from ground truth map
-        voronoi_graph = self.ground_truth_map.deleaved_reduced_voronoi_graph(minimum_radius=1.5*self.robot_radius).copy()
+        voronoi_graph = self.ground_truth_map.deleaved_reduced_voronoi_graph(minimum_radius=2*self.robot_radius).copy()
         minimum_length_paths = nx.all_pairs_dijkstra_path(voronoi_graph, weight='voronoi_path_distance')
         minimum_length_costs = dict(nx.all_pairs_dijkstra_path_length(voronoi_graph, weight='voronoi_path_distance'))
         costs = defaultdict(dict)
