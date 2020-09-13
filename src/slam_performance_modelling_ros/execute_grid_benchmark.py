@@ -23,7 +23,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', dest='grid_benchmark_configuration',
                         help='Yaml file with the configuration of the benchmark.',
                         type=str,
-                        default="~/w/catkin_ws/src/slam_performance_modelling/config/benchmark_configurations/slam_grid_benchmark_slam_toolbox_experimental_nav_config.yaml",
+                        default="~/w/catkin_ws/src/slam_performance_modelling/config/benchmark_configurations/slam_grid_benchmark_gmapping.yaml",
                         required=False)
 
     parser.add_argument('-r', dest='base_run_folder',
