@@ -38,13 +38,18 @@ if __name__ == '__main__':
                         default=1,
                         required=False)
 
+    parser.add_argument('--ignore-previous-runs', dest='ignore_previous_runs',
+                        help='When set the the previous runs in base_run_folder are ignored when counting the param combinations already executed.',
+                        action='store_true',
+                        required=False)
+
     parser.add_argument('--no-shuffle', dest='no_shuffle',
                         help='When set the order of the combinations is not randomized.',
                         action='store_true',
                         required=False)
 
     parser.add_argument('--gui', dest='gui',
-                        help='When set the components are run with no GUI.',
+                        help='When set the components are run with GUI (opposite of headless).',
                         action='store_true',
                         required=False)
 
@@ -63,6 +68,7 @@ if __name__ == '__main__':
                            environment_folders=environment_folders,
                            base_run_folder=base_run_folder,
                            num_runs=args.num_runs,
+                           ignore_executed_params_combinations=args.ignore_previous_runs,
                            shuffle=not args.no_shuffle,
                            headless=not args.gui,
                            show_ros_info=args.show_ros_info)
