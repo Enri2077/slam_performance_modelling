@@ -7,12 +7,12 @@ if [ $# -eq 2 ]
     echo "container id: $1"
     echo "cpu set: $2"
     docker run -ti --rm \
-        --name ${USER}_slam_benchmark_v2_$1 \
+        --name ${USER}_slam_benchmark_v4_$1 \
         --user $(id -u):$(id -g) \
         --cpuset-cpus "$2" \
         -v ~/datasets/private/performance_modelling:/home/${USER}/ds/performance_modelling \
         -v ~/datasets/private/performance_modelling/ros_logs:/home/${USER}/.ros/log \
-        ${USER}/slam_benchmark:v2
+        ${USER}/slam_benchmark:v4
   else
     echo "usage: $0 container_id cpu_set"
 fi
