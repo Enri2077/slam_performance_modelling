@@ -46,7 +46,7 @@ class BenchmarkRun(object):
         beta_1, beta_2, beta_3, beta_4 = self.run_parameters['beta']
         laser_scan_max_range = self.run_parameters['laser_scan_max_range']
         laser_scan_fov_deg = self.run_parameters['laser_scan_fov_deg']
-        laser_scan_fov_rad = laser_scan_fov_deg*np.pi/180
+        laser_scan_fov_rad = (laser_scan_fov_deg-1)*np.pi/180
         map_resolution = self.run_parameters['map_resolution']
         ceres_loss_function = self.run_parameters['ceres_loss_function'] if self.slam_node == 'slam_toolbox' else None
         num_particles = self.run_parameters['particles'] if self.slam_node == 'gmapping' else None
