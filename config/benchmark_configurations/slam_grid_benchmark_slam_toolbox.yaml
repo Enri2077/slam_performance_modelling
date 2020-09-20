@@ -12,7 +12,7 @@ components_configuration:
 
 combinatorial_parameters:
   slam_node: [slam_toolbox]
-  ceres_loss_function: [None, HuberLoss, CauchyLoss]
+  ceres_loss_function: [None]
   linear_update: [0.2]
   angular_update: [0.1]
   beta: [[0.0, 0.0, 0.0, 0.0], [0.035, 0.035, 0.01, 0.01]]
