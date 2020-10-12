@@ -67,7 +67,7 @@ RUN mkdir -p ~/w/catkin_ws/src
 RUN \
   cd ~/w/catkin_ws/src && \
   git clone https://github.com/Enri2077/performance_modelling.git && \
-  git clone --branch=melodic-devel https://github.com/Enri2077/slam_performance_modelling.git && \
+  git clone --branch=slam-toolbox-radish-expeiments https://github.com/Enri2077/slam_performance_modelling.git && \
   git clone --branch=melodic-devel https://github.com/Enri2077/gazebo_ros_pkgs.git && \
   git clone --branch=melodic-devel https://github.com/Enri2077/escape_lethal_cost_recovery_behavior.git && \
   git clone --branch=melodic-devel https://github.com/SteveMacenski/slam_toolbox.git

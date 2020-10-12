@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', dest='environment_dataset_folders',
                         help='Dataset folders containg the environment data. Use wildcards to select multiple folders. Only folders are selected, files are ignored.',
                         type=str,
-                        default="~/ds/performance_modelling/test_datasets/dataset/*",
+                        default="~/ds/performance_modelling/radish_datasets/dataset/*",
                         required=False)
 
     parser.add_argument('-c', dest='grid_benchmark_configuration',
@@ -29,13 +29,13 @@ if __name__ == '__main__':
     parser.add_argument('-r', dest='base_run_folder',
                         help='Folder in which the result of each run will be placed.',
                         type=str,
-                        default="~/ds/performance_modelling/output/test_slam/",
+                        default="~/ds/performance_modelling/output/slam_radish_experiments/",
                         required=False)
 
     parser.add_argument('-n', '--num-runs', dest='num_runs',
                         help='Number of runs to be executed for each combination of configurations.',
                         type=int,
-                        default=1,
+                        default=10,
                         required=False)
 
     parser.add_argument('--ignore-previous-runs', dest='ignore_previous_runs',
