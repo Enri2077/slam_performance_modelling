@@ -38,6 +38,10 @@ class BenchmarkRun(object):
             lambda p: path.expanduser(p),
             self.benchmark_configuration['gazebo_model_path_env_var'] + [path.dirname(path.abspath(self.environment_folder)), self.run_output_folder]
         ))
+        self.gazebo_resource_path_env_var = ":".join(map(
+            lambda p: path.expanduser(p),
+            self.benchmark_configuration['gazebo_resource_path_env_var']
+        ))
         self.gazebo_plugin_path_env_var = ":".join(map(
             lambda p: path.expanduser(p),
             self.benchmark_configuration['gazebo_plugin_path_env_var']
@@ -46,12 +50,17 @@ class BenchmarkRun(object):
         beta_1, beta_2, beta_3, beta_4 = self.run_parameters['beta']
         laser_scan_max_range = self.run_parameters['laser_scan_max_range']
         laser_scan_fov_deg = self.run_parameters['laser_scan_fov_deg']
-        laser_scan_fov_rad = (laser_scan_fov_deg-1)*np.pi/180
+        laser_scan_fov_rad = laser_scan_fov_deg*np.pi/180
         map_resolution = self.run_parameters['map_resolution']
         ceres_loss_function = self.run_parameters['ceres_loss_function'] if self.slam_node == 'slam_toolbox' else None
         num_particles = self.run_parameters['particles'] if self.slam_node == 'gmapping' else None
         linear_update = self.run_parameters['linear_update']
         angular_update = self.run_parameters['angular_update']
+        fewer_nav_goals = self.run_parameters['fewer_nav_goals']
+        xy_goal_tolerance, yaw_goal_tolerance = self.run_parameters['goal_tolerance']
+        lidar_model = self.run_parameters['lidar_model']
+
+        random_traversal_path = self.benchmark_configuration['random_traversal_path']
 
         # run variables
         self.aborted = False
@@ -102,6 +111,8 @@ class BenchmarkRun(object):
         supervisor_configuration['run_output_folder'] = self.run_output_folder
         supervisor_configuration['pid_father'] = os.getpid()
         supervisor_configuration['ground_truth_map_info_path'] = self.ground_truth_map_info_path
+        supervisor_configuration['fewer_nav_goals'] = fewer_nav_goals
+        supervisor_configuration['random_traversal_path'] = random_traversal_path
         if not path.exists(path.dirname(self.supervisor_configuration_path)):
             os.makedirs(path.dirname(self.supervisor_configuration_path))
         with open(self.supervisor_configuration_path, 'w') as supervisor_configuration_file:
@@ -143,9 +154,14 @@ class BenchmarkRun(object):
             raise ValueError()
 
         # copy the configuration of move_base to the run folder
+        with open(original_move_base_configuration_path) as original_move_base_configuration_file:
+            move_base_configuration = yaml.safe_load(original_move_base_configuration_file)
+        move_base_configuration['DWAPlannerROS']['xy_goal_tolerance'] = xy_goal_tolerance
+        move_base_configuration['DWAPlannerROS']['yaw_goal_tolerance'] = yaw_goal_tolerance
         if not path.exists(path.dirname(self.move_base_configuration_path)):
             os.makedirs(path.dirname(self.move_base_configuration_path))
-        shutil.copyfile(original_move_base_configuration_path, self.move_base_configuration_path)
+        with open(self.move_base_configuration_path, 'w') as move_base_configuration_file:
+            yaml.dump(move_base_configuration, move_base_configuration_file, default_flow_style=False)
 
         # copy the configuration of the gazebo world model to the run folder and update its parameters
         gazebo_original_world_model_tree = et.parse(original_gazebo_world_model_path)
@@ -158,9 +174,20 @@ class BenchmarkRun(object):
         # copy the configuration of the gazebo robot sdf model to the run folder and update its parameters
         gazebo_robot_model_sdf_tree = et.parse(original_gazebo_robot_model_sdf_path)
         gazebo_robot_model_sdf_root = gazebo_robot_model_sdf_tree.getroot()
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/samples")[0].text = str(int(laser_scan_fov_deg))
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/min_angle")[0].text = str(float(-laser_scan_fov_rad/2))
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/max_angle")[0].text = str(float(+laser_scan_fov_rad/2))
+        num_samples = int(laser_scan_fov_deg)
+        angle_increment = laser_scan_fov_rad/laser_scan_fov_deg
+        if lidar_model == 'v1':
+            laser_scan_fov_rad_v1 = (laser_scan_fov_deg-1)*np.pi/180
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/samples")[0].text = str(num_samples)
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/min_angle")[0].text = str(float(-laser_scan_fov_rad_v1/2))
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/max_angle")[0].text = str(float(+laser_scan_fov_rad_v1/2))
+        elif lidar_model == 'v2':
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/samples")[0].text = str(num_samples)
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/min_angle")[0].text = str(float(-laser_scan_fov_rad / 2))
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/max_angle")[0].text = str(float(+laser_scan_fov_rad / 2 - angle_increment))
+        else:
+            raise ValueError()
+
         gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/range/max")[0].text = str(float(laser_scan_max_range))
         gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/plugin[@name='turtlebot3_laserscan_realistic']/frameName")[0].text = "base_scan_realistic"
         if beta_1 == 0.0 and beta_2 == 0.0 and beta_3 == 0.0 and beta_4 == 0.0:
@@ -300,6 +327,7 @@ class BenchmarkRun(object):
 
         # set gazebo's environment variables
         os.environ['GAZEBO_MODEL_PATH'] = self.gazebo_model_path_env_var
+        os.environ['GAZEBO_RESOURCE_PATH'] = self.gazebo_resource_path_env_var
         os.environ['GAZEBO_PLUGIN_PATH'] = self.gazebo_plugin_path_env_var
 
         # launch roscore and setup a node to monitor ros

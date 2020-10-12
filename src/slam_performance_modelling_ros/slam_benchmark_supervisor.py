@@ -74,6 +74,8 @@ class SlamBenchmarkSupervisor:
         self.robot_base_frame = rospy.get_param('~robot_base_frame')
         self.robot_entity_name = rospy.get_param('~robot_entity_name')
         self.robot_radius = rospy.get_param('~robot_radius')
+        self.fewer_nav_goals = rospy.get_param('~fewer_nav_goals')
+        self.random_traversal_path = rospy.get_param('~random_traversal_path')
 
         # file system paths
         self.run_output_folder = rospy.get_param('~run_output_folder')
@@ -191,7 +193,10 @@ class SlamBenchmarkSupervisor:
 
         # get greedy path traversing the whole graph starting from a random node
         traversal_path_indices = list()
-        current_node = random.choice(list(voronoi_graph.nodes))
+        if self.random_traversal_path:
+            current_node = random.choice(list(voronoi_graph.nodes))
+        else:
+            current_node = list(voronoi_graph.nodes)[0]
         nodes_queue = set(nx.node_connected_component(voronoi_graph, current_node))
         while len(nodes_queue):
             candidates = list(filter(lambda node_cost: node_cost[0] in nodes_queue, costs[current_node].items()))
@@ -208,14 +213,21 @@ class SlamBenchmarkSupervisor:
             pose.position.x, pose.position.y = voronoi_graph.nodes[node_index]['vertex']
             q = pyquaternion.Quaternion(axis=[0, 0, 1], radians=np.random.uniform(-np.pi, np.pi))
             pose.orientation = Quaternion(w=q.w, x=q.x, y=q.y, z=q.z)
+
+            if self.fewer_nav_goals and len(self.traversal_path_poses) > 0:
+                prev_position = self.traversal_path_poses[-1].position
+                distance_from_prev_node = np.sqrt((pose.position.x - prev_position.x) ** 2 + (pose.position.y - prev_position.y) ** 2)
+                if distance_from_prev_node < 2.0:
+                    continue
+
             self.traversal_path_poses.append(pose)
 
         # add the reversed path to make sure all parts of the map are visited in both directions
-        reversed_traversal_path_poses = copy.deepcopy(self.traversal_path_poses[::-1])
-        for pose in reversed_traversal_path_poses:
-            q = pyquaternion.Quaternion(axis=[0, 0, 1], radians=np.random.uniform(-np.pi, np.pi))
-            pose.orientation = Quaternion(w=q.w, x=q.x, y=q.y, z=q.z)
-        self.traversal_path_poses += reversed_traversal_path_poses
+        # reversed_traversal_path_poses = copy.deepcopy(self.traversal_path_poses[::-1])
+        # for pose in reversed_traversal_path_poses:
+        #     q = pyquaternion.Quaternion(axis=[0, 0, 1], radians=np.random.uniform(-np.pi, np.pi))
+        #     pose.orientation = Quaternion(w=q.w, x=q.x, y=q.y, z=q.z)
+        # self.traversal_path_poses += reversed_traversal_path_poses
 
         if len(self.traversal_path_poses) < 2:
             self.write_event('insufficient_number_of_poses_in_traversal_path')
@@ -298,8 +310,20 @@ class SlamBenchmarkSupervisor:
         if not path.exists(path.dirname(self.output_pose_graph_file_path)):
             os.makedirs(path.dirname(self.output_pose_graph_file_path))
 
-        self.save_map_service_client.call(SaveMapRequest(name=String(data=self.output_map_file_path)))
-        self.serialize_map_client.call(SerializePoseGraphRequest(filename=self.output_pose_graph_file_path))
+        try:
+            self.save_map_service_client.wait_for_service(timeout=1.0)
+            self.save_map_service_client.call(SaveMapRequest(name=String(data=self.output_map_file_path)))
+        except rospy.ROSException, rospy.ServiceException:
+            print_info("Service not available: {}".format(self.save_map_service_client.resolved_name))
+            self.write_event('failed_to_save_map')
+
+        try:
+            self.serialize_map_client.wait_for_service(timeout=1.0)
+            self.serialize_map_client.call(SerializePoseGraphRequest(filename=self.output_pose_graph_file_path))
+        except rospy.ROSException, rospy.ServiceException:
+            print_info("Service not available: {}".format(self.serialize_map_client.resolved_name))
+            self.write_event('failed_to_serialize_pose_graph')
+
         self.write_event('save_map_request_sent')
 
     def ros_shutdown_callback(self):
