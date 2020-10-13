@@ -70,7 +70,7 @@ RUN \
   git clone --branch=slam-toolbox-radish-expeiments https://github.com/Enri2077/slam_performance_modelling.git && \
   git clone --branch=melodic-devel https://github.com/Enri2077/gazebo_ros_pkgs.git && \
   git clone --branch=melodic-devel https://github.com/Enri2077/escape_lethal_cost_recovery_behavior.git && \
-  git clone --branch=melodic-devel https://github.com/SteveMacenski/slam_toolbox.git
+  git clone --branch=melodic-ground-truth-mapping https://github.com/Enri2077/slam_toolbox.git
 
 
 # build workspace and install python user packages
