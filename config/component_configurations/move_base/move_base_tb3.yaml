@@ -96,7 +96,7 @@ global_costmap:
   obstacle_range: 3.0
   raytrace_range: 3.5
 
-  robot_radius: 0.30
+  robot_radius: 0.32
 
   global_frame: map
   robot_base_frame: base_footprint_gt

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num-runs', dest='num_runs',
                         help='Number of runs to be executed for each combination of configurations.',
                         type=int,
-                        default=1,
+                        default=10,
                         required=False)
 
     parser.add_argument('--ignore-previous-runs', dest='ignore_previous_runs',
