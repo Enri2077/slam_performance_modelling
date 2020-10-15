@@ -14,12 +14,12 @@ components_configuration:
   move_base: move_base/move_base_tb3.yaml
 
 combinatorial_parameters:
-  slam_node: [slam_toolbox]
-  ceres_loss_function: [None]
-  linear_angular_update: [[0.2, 0.1], [0.5, 0.5]]
-  beta: [[0.0, 0.0, 0.0, 0.0], [2.0, 0.0, 2.0, 0.0]]
-  laser_scan_max_range: [3.5, 8.0, 30.0]
-  laser_scan_fov_deg: [90, 180, 270, 359]
+  slam_node: [gmapping]
+  particles: [30]
+  linear_angular_update: [[0.5, 0.5]]
+  beta: [[0.0, 0.0, 0.0, 0.0]]
+  laser_scan_max_range: [3.5, 30.0]
+  laser_scan_fov_deg: [90, 359]
   map_resolution: [0.05]
   fewer_nav_goals: [true]
   goal_tolerance: [[0.3, 3.142]]

@@ -5,7 +5,7 @@ gazebo_plugin_path_env_var: [~/w/catkin_ws/build/gazebo_plugins/]
 
 supervisor_component: slam_benchmark_supervisor
 
-random_traversal_path: false
+random_traversal_path: true
 
 components_configuration:
   supervisor: slam_benchmark_supervisor/slam_benchmark_supervisor.yaml
@@ -16,12 +16,10 @@ components_configuration:
 combinatorial_parameters:
   slam_node: [gmapping]
   particles: [30]
-  linear_update: [0.2]
-  angular_update: [0.1]
-  beta: [[0.0, 0.0, 0.0, 0.0]]
-  laser_scan_max_range: [30.0]
-  laser_scan_fov_deg: [180]
+  linear_angular_update: [[0.2, 0.1], [0.5, 0.5]]
+  beta: [[0.0, 0.0, 0.0, 0.0], [2.0, 0.0, 2.0, 0.0]]
+  laser_scan_max_range: [3.5, 8.0, 30.0]
+  laser_scan_fov_deg: [90, 180, 270, 359]
   map_resolution: [0.05]
   fewer_nav_goals: [true]
-  goal_tolerance: [[0.3, 3.142]]  # 0.1, 0.1
-  lidar_model: [v2]
+  goal_tolerance: [[0.3, 3.142]]
