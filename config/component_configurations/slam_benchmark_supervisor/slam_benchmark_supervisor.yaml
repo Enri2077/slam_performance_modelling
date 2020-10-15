@@ -7,6 +7,9 @@ waypoint_timeout: 600
 ps_snapshot_period: 10.0
 write_estimated_poses_period: 0.1
 robot_radius: 0.2
+random_traversal_path: true
+fewer_nav_goals: false
+min_distance_traversal_path: 2.0  # if fewer_nav_goals is true, when the distance between two consecutive poses in the traversal path is less than this value, the second pose will be excluded.
 
 # topic names
 scan_topic: /scan

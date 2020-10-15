@@ -98,6 +98,7 @@ class SlamBenchmarkSupervisor:
         self.initial_pose_covariance_matrix[1, 1] = rospy.get_param('~initial_pose_std_xy')**2
         self.initial_pose_covariance_matrix[5, 5] = rospy.get_param('~initial_pose_std_theta')**2
         self.goal_tolerance = rospy.get_param('~goal_tolerance')
+        self.min_distance_traversal_path = rospy.get_param('~min_distance_traversal_path')
 
         # run variables
         self.run_started = False
@@ -217,17 +218,17 @@ class SlamBenchmarkSupervisor:
             if self.fewer_nav_goals and len(self.traversal_path_poses) > 0:
                 prev_position = self.traversal_path_poses[-1].position
                 distance_from_prev_node = np.sqrt((pose.position.x - prev_position.x) ** 2 + (pose.position.y - prev_position.y) ** 2)
-                if distance_from_prev_node < 2.0:
+                if distance_from_prev_node < self.min_distance_traversal_path:
                     continue
 
             self.traversal_path_poses.append(pose)
 
         # add the reversed path to make sure all parts of the map are visited in both directions
-        # reversed_traversal_path_poses = copy.deepcopy(self.traversal_path_poses[::-1])
-        # for pose in reversed_traversal_path_poses:
-        #     q = pyquaternion.Quaternion(axis=[0, 0, 1], radians=np.random.uniform(-np.pi, np.pi))
-        #     pose.orientation = Quaternion(w=q.w, x=q.x, y=q.y, z=q.z)
-        # self.traversal_path_poses += reversed_traversal_path_poses
+        reversed_traversal_path_poses = copy.deepcopy(self.traversal_path_poses[::-1])
+        for pose in reversed_traversal_path_poses:
+            q = pyquaternion.Quaternion(axis=[0, 0, 1], radians=np.random.uniform(-np.pi, np.pi))
+            pose.orientation = Quaternion(w=q.w, x=q.x, y=q.y, z=q.z)
+        self.traversal_path_poses += reversed_traversal_path_poses
 
         if len(self.traversal_path_poses) < 2:
             self.write_event('insufficient_number_of_poses_in_traversal_path')
