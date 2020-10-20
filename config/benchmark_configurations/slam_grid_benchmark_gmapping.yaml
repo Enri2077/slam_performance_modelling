@@ -2,6 +2,7 @@ components_configurations_folder: ~/w/catkin_ws/src/slam_performance_modelling/c
 gazebo_model_path_env_var: [~/ds/performance_modelling/aws-robomaker-small-warehouse-world/models]
 gazebo_resource_path_env_var: [~/ds/performance_modelling/aws-robomaker-small-warehouse-world]
 gazebo_plugin_path_env_var: [~/w/catkin_ws/build/gazebo_plugins/]
+source_workspace_path: ~/w/catkin_ws/src/
 
 supervisor_component: slam_benchmark_supervisor
 

@@ -17,6 +17,7 @@ import numpy as np
 from performance_modelling_py.utils import backup_file_if_exists, print_info, print_error
 from performance_modelling_py.component_proxies.ros1_component import Component
 from slam_performance_modelling_ros.metrics import compute_metrics
+from performance_modelling_py.benchmark_execution.log_software_versions import log_packages_and_repos
 
 
 class BenchmarkRun(object):
@@ -83,6 +84,8 @@ class BenchmarkRun(object):
         # prepare folder structure
         run_configuration_path = path.join(self.run_output_folder, "components_configuration")
         run_info_file_path = path.join(self.run_output_folder, "run_info.yaml")
+        source_workspace_path = self.benchmark_configuration['source_workspace_path']
+        software_versions_log_path = path.join(self.run_output_folder, "software_versions_log")
         backup_file_if_exists(self.run_output_folder)
         os.mkdir(self.run_output_folder)
         os.mkdir(run_configuration_path)
@@ -248,6 +251,7 @@ class BenchmarkRun(object):
         run_info_dict['run_id'] = self.run_id
         run_info_dict['run_folder'] = self.run_output_folder
         run_info_dict['environment_folder'] = environment_folder
+        run_info_dict['benchmark_configuration'] = self.benchmark_configuration
         run_info_dict['run_parameters'] = self.run_parameters
         run_info_dict['local_components_configuration'] = {
             'supervisor': supervisor_configuration_relative_path,
@@ -268,6 +272,9 @@ class BenchmarkRun(object):
 
         with open(run_info_file_path, 'w') as run_info_file:
             yaml.dump(run_info_dict, run_info_file, default_flow_style=False)
+
+        # log packages and software versions and status
+        log_packages_and_repos(source_workspace_path=source_workspace_path, log_dir_path=software_versions_log_path)
 
     def log(self, event):
 
