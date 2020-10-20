@@ -10,6 +10,7 @@ robot_radius: 0.2
 random_traversal_path: true
 fewer_nav_goals: false
 min_distance_traversal_path: 2.0  # if fewer_nav_goals is true, when the distance between two consecutive poses in the traversal path is less than this value, the second pose will be excluded.
+environment_type: 'simulation'
 
 # topic names
 scan_topic: /scan

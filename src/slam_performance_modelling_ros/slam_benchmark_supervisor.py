@@ -76,6 +76,7 @@ class SlamBenchmarkSupervisor:
         self.robot_radius = rospy.get_param('~robot_radius')
         self.fewer_nav_goals = rospy.get_param('~fewer_nav_goals')
         self.random_traversal_path = rospy.get_param('~random_traversal_path')
+        self.environment_type = rospy.get_param('~environment_type')
 
         # file system paths
         self.run_output_folder = rospy.get_param('~run_output_folder')
@@ -133,7 +134,10 @@ class SlamBenchmarkSupervisor:
         # pandas dataframes for benchmark data
         self.estimated_poses_df = pd.DataFrame(columns=['t', 'x', 'y', 'theta'])
         self.estimated_correction_poses_df = pd.DataFrame(columns=['t', 'x', 'y', 'theta', 'cov_x_x', 'cov_x_y', 'cov_y_y', 'cov_theta_theta'])
-        self.ground_truth_poses_df = pd.DataFrame(columns=['t', 'x', 'y', 'theta', 'v_x', 'v_y', 'v_theta'])
+        if self.environment_type == 'simulation':
+            self.ground_truth_poses_df = pd.DataFrame(columns=['t', 'x', 'y', 'theta', 'v_x', 'v_y', 'v_theta'])
+        else:
+            self.ground_truth_poses_df = None
 
         # setup timers
         rospy.Timer(rospy.Duration.from_sec(run_timeout), self.run_timeout_callback)
@@ -154,13 +158,30 @@ class SlamBenchmarkSupervisor:
         # setup subscribers
         rospy.Subscriber(scan_topic, LaserScan, self.scan_callback, queue_size=1)
         rospy.Subscriber(estimated_pose_correction_topic, PoseWithCovarianceStamped, self.estimated_pose_correction_callback, queue_size=1)
-        rospy.Subscriber(ground_truth_pose_topic, Odometry, self.ground_truth_pose_callback, queue_size=1)
+        if self.environment_type == 'simulation':
+            rospy.Subscriber(ground_truth_pose_topic, Odometry, self.ground_truth_pose_callback, queue_size=1)
 
         # setup action clients
         self.navigate_to_pose_action_client = SimpleActionClient(navigate_to_pose_action, MoveBaseAction)
 
     def start_run(self):
-        print_info("preparing to start run")
+        if self.environment_type == 'dataset':
+            self.start_dataset_run()
+        elif self.environment_type == 'simulation':
+            self.start_simulation_run()
+        else:
+            raise RunFailException("environment_type [{}] is neither 'dataset' nor 'simulation'".format(self.environment_type))
+
+    def start_dataset_run(self):
+        print_info("preparing to start dataset run")
+        self.write_event('run_start')
+        self.run_started = True
+        rospy.spin()
+        self.write_event('run_completed')
+        # self.save_map()  # TODO find way to save map and posegraph?
+
+    def start_simulation_run(self):
+        print_info("preparing to start simulation run")
 
         # wait to receive sensor data from the environment (e.g., a simulator may need time to startup)
         waiting_time = 0.0
@@ -342,7 +363,8 @@ class SlamBenchmarkSupervisor:
         """
         self.estimated_poses_df.to_csv(self.estimated_poses_file_path, index=False)
         self.estimated_correction_poses_df.to_csv(self.estimated_correction_poses_file_path, index=False)
-        self.ground_truth_poses_df.to_csv(self.ground_truth_poses_file_path, index=False)
+        if self.environment_type == 'simulation':
+            self.ground_truth_poses_df.to_csv(self.ground_truth_poses_file_path, index=False)
 
     def run_timeout_callback(self, _):
         print_error("terminating supervisor due to timeout, terminating run")

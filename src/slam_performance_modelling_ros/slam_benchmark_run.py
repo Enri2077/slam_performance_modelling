@@ -32,6 +32,7 @@ class BenchmarkRun(object):
         self.headless = headless
 
         # environment parameters
+        self.environment_type = self.benchmark_configuration['environment_type'] if 'environment_type' in self.benchmark_configuration else 'simulation'
         self.environment_folder = environment_folder
         self.ground_truth_map_info_path = path.join(environment_folder, "data", "map.yaml")
         self.gazebo_model_path_env_var = ":".join(map(
@@ -46,8 +47,8 @@ class BenchmarkRun(object):
             lambda p: path.expanduser(p),
             self.benchmark_configuration['gazebo_plugin_path_env_var']
         ))
+
         self.slam_node = self.run_parameters['slam_node']
-        beta_1, beta_2, beta_3, beta_4 = self.run_parameters['beta']
         laser_scan_max_range = self.run_parameters['laser_scan_max_range']
         laser_scan_fov_deg = self.run_parameters['laser_scan_fov_deg']
         laser_scan_fov_rad = (laser_scan_fov_deg-1)*np.pi/180
@@ -55,10 +56,26 @@ class BenchmarkRun(object):
         ceres_loss_function = self.run_parameters['ceres_loss_function'] if self.slam_node == 'slam_toolbox' else None
         num_particles = self.run_parameters['particles'] if self.slam_node == 'gmapping' else None
         linear_update, angular_update = self.run_parameters['linear_angular_update']
-        fewer_nav_goals = self.run_parameters['fewer_nav_goals']
-        xy_goal_tolerance, yaw_goal_tolerance = self.run_parameters['goal_tolerance']
 
-        random_traversal_path = self.benchmark_configuration['random_traversal_path']
+        if self.environment_type == 'dataset':
+            random_traversal_path = False
+            fewer_nav_goals = False
+            beta_1 = beta_2 = beta_3 = beta_4 = None
+            xy_goal_tolerance = yaw_goal_tolerance = None
+            dataset_odom = self.run_parameters['dataset_odom']
+            self.real_data_rosbag_path = path.join(self.environment_folder, "data", "recorded_data", "odom-{odom}_laser_scan_fov_deg-{laser_scan_fov_deg}_laser_scan_max_range-{laser_scan_max_range}.bag".format(
+                odom=dataset_odom,
+                laser_scan_fov_deg=float(laser_scan_fov_deg),
+                laser_scan_max_range=float(laser_scan_max_range)
+            ))
+        elif self.environment_type == 'simulation':
+            random_traversal_path = self.benchmark_configuration['random_traversal_path']
+            fewer_nav_goals = self.run_parameters['fewer_nav_goals']
+            beta_1, beta_2, beta_3, beta_4 = self.run_parameters['beta']
+            xy_goal_tolerance, yaw_goal_tolerance = self.run_parameters['goal_tolerance']
+            self.real_data_rosbag_path = None
+        else:
+            raise ValueError()
 
         # run variables
         self.aborted = False
@@ -75,33 +92,33 @@ class BenchmarkRun(object):
         original_supervisor_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['supervisor'])
         original_gmapping_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['gmapping'])
         original_slam_toolbox_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['slam_toolbox'])
-        original_move_base_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['move_base'])
-        original_gazebo_world_model_path = path.join(environment_folder, "gazebo", "gazebo_environment.model")
-        original_gazebo_robot_model_config_path = path.join(environment_folder, "gazebo", "robot", "model.config")
-        original_gazebo_robot_model_sdf_path = path.join(environment_folder, "gazebo", "robot", "model.sdf")
-        original_robot_urdf_path = path.join(environment_folder, "gazebo", "robot.urdf")
+        original_move_base_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['move_base']) if self.environment_type == 'simulation' else None
+        original_gazebo_world_model_path = path.join(environment_folder, "gazebo", "gazebo_environment.model") if self.environment_type == 'simulation' else None
+        original_gazebo_robot_model_config_path = path.join(environment_folder, "gazebo", "robot", "model.config") if self.environment_type == 'simulation' else None
+        original_gazebo_robot_model_sdf_path = path.join(environment_folder, "gazebo", "robot", "model.sdf") if self.environment_type == 'simulation' else None
+        original_robot_urdf_path = path.join(environment_folder, "gazebo", "robot.urdf") if self.environment_type == 'simulation' else None
 
         # components configuration relative paths
         supervisor_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['supervisor'])
         gmapping_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['gmapping'])
         slam_toolbox_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['slam_toolbox'])
-        move_base_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['move_base'])
-        gazebo_world_model_relative_path = path.join("components_configuration", "gazebo", "gazebo_environment.model")
-        gazebo_robot_model_config_relative_path = path.join("components_configuration", "gazebo", "robot", "model.config")
-        gazebo_robot_model_sdf_relative_path = path.join("components_configuration", "gazebo", "robot", "model.sdf")
-        robot_gt_urdf_relative_path = path.join("components_configuration", "gazebo", "robot_gt.urdf")
-        robot_realistic_urdf_relative_path = path.join("components_configuration", "gazebo", "robot_realistic.urdf")
+        move_base_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['move_base']) if self.environment_type == 'simulation' else None
+        gazebo_world_model_relative_path = path.join("components_configuration", "gazebo", "gazebo_environment.model") if self.environment_type == 'simulation' else None
+        gazebo_robot_model_config_relative_path = path.join("components_configuration", "gazebo", "robot", "model.config") if self.environment_type == 'simulation' else None
+        gazebo_robot_model_sdf_relative_path = path.join("components_configuration", "gazebo", "robot", "model.sdf") if self.environment_type == 'simulation' else None
+        robot_gt_urdf_relative_path = path.join("components_configuration", "gazebo", "robot_gt.urdf") if self.environment_type == 'simulation' else None
+        robot_realistic_urdf_relative_path = path.join("components_configuration", "gazebo", "robot_realistic.urdf") if self.environment_type == 'simulation' else None
 
         # components configuration paths in run folder
         self.supervisor_configuration_path = path.join(self.run_output_folder, supervisor_configuration_relative_path)
         self.gmapping_configuration_path = path.join(self.run_output_folder, gmapping_configuration_relative_path)
         self.slam_toolbox_configuration_path = path.join(self.run_output_folder, slam_toolbox_configuration_relative_path)
-        self.move_base_configuration_path = path.join(self.run_output_folder, move_base_configuration_relative_path)
-        self.gazebo_world_model_path = path.join(self.run_output_folder, gazebo_world_model_relative_path)
-        gazebo_robot_model_config_path = path.join(self.run_output_folder, gazebo_robot_model_config_relative_path)
-        gazebo_robot_model_sdf_path = path.join(self.run_output_folder, gazebo_robot_model_sdf_relative_path)
-        self.robot_gt_urdf_path = path.join(self.run_output_folder, robot_gt_urdf_relative_path)
-        self.robot_realistic_urdf_path = path.join(self.run_output_folder, robot_realistic_urdf_relative_path)
+        self.move_base_configuration_path = path.join(self.run_output_folder, move_base_configuration_relative_path) if self.environment_type == 'simulation' else None
+        self.gazebo_world_model_path = path.join(self.run_output_folder, gazebo_world_model_relative_path) if self.environment_type == 'simulation' else None
+        gazebo_robot_model_config_path = path.join(self.run_output_folder, gazebo_robot_model_config_relative_path) if self.environment_type == 'simulation' else None
+        gazebo_robot_model_sdf_path = path.join(self.run_output_folder, gazebo_robot_model_sdf_relative_path) if self.environment_type == 'simulation' else None
+        self.robot_gt_urdf_path = path.join(self.run_output_folder, robot_gt_urdf_relative_path) if self.environment_type == 'simulation' else None
+        self.robot_realistic_urdf_path = path.join(self.run_output_folder, robot_realistic_urdf_relative_path) if self.environment_type == 'simulation' else None
 
         # copy the configuration of the supervisor to the run folder and update its parameters
         with open(original_supervisor_configuration_path) as supervisor_configuration_file:
@@ -111,6 +128,8 @@ class BenchmarkRun(object):
         supervisor_configuration['ground_truth_map_info_path'] = self.ground_truth_map_info_path
         supervisor_configuration['fewer_nav_goals'] = fewer_nav_goals
         supervisor_configuration['random_traversal_path'] = random_traversal_path
+        supervisor_configuration['environment_type'] = self.environment_type
+        supervisor_configuration['robot_base_frame'] = "base_link_realistic" if self.environment_type == 'simulation' else "base_link"
         if not path.exists(path.dirname(self.supervisor_configuration_path)):
             os.makedirs(path.dirname(self.supervisor_configuration_path))
         with open(self.supervisor_configuration_path, 'w') as supervisor_configuration_file:
@@ -124,6 +143,8 @@ class BenchmarkRun(object):
             gmapping_configuration['str'] = max(0.005, beta_2)  # rad/m, Odometry error in rotation as a function of translation (theta/rho)
             gmapping_configuration['srr'] = max(0.005, beta_3)  # m/m, Odometry error in translation as a function of translation (rho/rho)
             gmapping_configuration['srt'] = max(0.005, beta_4)  # m/rad, Odometry error in translation as a function of rotation (rho/theta)
+            gmapping_configuration['odom_frame'] = "odom_realistic" if self.environment_type == 'simulation' else "odom"
+            gmapping_configuration['base_frame'] = "base_footprint_realistic" if self.environment_type == 'simulation' else "base_link"
             gmapping_configuration['num_particles'] = num_particles
             gmapping_configuration['linearUpdate'] = linear_update
             gmapping_configuration['angularUpdate'] = angular_update
@@ -138,6 +159,8 @@ class BenchmarkRun(object):
             # copy the configuration of slam_toolbox to the run folder and update its parameters
             with open(original_slam_toolbox_configuration_path) as original_slam_toolbox_configuration_file:
                 slam_toolbox_configuration = yaml.safe_load(original_slam_toolbox_configuration_file)
+            slam_toolbox_configuration['odom_frame'] = "odom_realistic" if self.environment_type == 'simulation' else "odom"
+            slam_toolbox_configuration['base_frame'] = "base_footprint_realistic" if self.environment_type == 'simulation' else "base_link"
             slam_toolbox_configuration['ceres_loss_function'] = ceres_loss_function
             slam_toolbox_configuration['minimum_travel_distance'] = linear_update
             slam_toolbox_configuration['minimum_travel_heading'] = angular_update
@@ -151,73 +174,74 @@ class BenchmarkRun(object):
         else:
             raise ValueError()
 
-        # copy the configuration of move_base to the run folder
-        with open(original_move_base_configuration_path) as original_move_base_configuration_file:
-            move_base_configuration = yaml.safe_load(original_move_base_configuration_file)
-        move_base_configuration['DWAPlannerROS']['xy_goal_tolerance'] = xy_goal_tolerance
-        move_base_configuration['DWAPlannerROS']['yaw_goal_tolerance'] = yaw_goal_tolerance
-        if not path.exists(path.dirname(self.move_base_configuration_path)):
-            os.makedirs(path.dirname(self.move_base_configuration_path))
-        with open(self.move_base_configuration_path, 'w') as move_base_configuration_file:
-            yaml.dump(move_base_configuration, move_base_configuration_file, default_flow_style=False)
+        if self.environment_type == 'simulation':
+            # copy the configuration of move_base to the run folder
+            with open(original_move_base_configuration_path) as original_move_base_configuration_file:
+                move_base_configuration = yaml.safe_load(original_move_base_configuration_file)
+            move_base_configuration['DWAPlannerROS']['xy_goal_tolerance'] = xy_goal_tolerance
+            move_base_configuration['DWAPlannerROS']['yaw_goal_tolerance'] = yaw_goal_tolerance
+            if not path.exists(path.dirname(self.move_base_configuration_path)):
+                os.makedirs(path.dirname(self.move_base_configuration_path))
+            with open(self.move_base_configuration_path, 'w') as move_base_configuration_file:
+                yaml.dump(move_base_configuration, move_base_configuration_file, default_flow_style=False)
 
-        # copy the configuration of the gazebo world model to the run folder and update its parameters
-        gazebo_original_world_model_tree = et.parse(original_gazebo_world_model_path)
-        gazebo_original_world_model_root = gazebo_original_world_model_tree.getroot()
-        gazebo_original_world_model_root.findall(".//include[@include_id='robot_model']/uri")[0].text = path.join("model://", path.dirname(gazebo_robot_model_sdf_relative_path))
-        if not path.exists(path.dirname(self.gazebo_world_model_path)):
-            os.makedirs(path.dirname(self.gazebo_world_model_path))
-        gazebo_original_world_model_tree.write(self.gazebo_world_model_path)
+            # copy the configuration of the gazebo world model to the run folder and update its parameters
+            gazebo_original_world_model_tree = et.parse(original_gazebo_world_model_path)
+            gazebo_original_world_model_root = gazebo_original_world_model_tree.getroot()
+            gazebo_original_world_model_root.findall(".//include[@include_id='robot_model']/uri")[0].text = path.join("model://", path.dirname(gazebo_robot_model_sdf_relative_path))
+            if not path.exists(path.dirname(self.gazebo_world_model_path)):
+                os.makedirs(path.dirname(self.gazebo_world_model_path))
+            gazebo_original_world_model_tree.write(self.gazebo_world_model_path)
 
-        # copy the configuration of the gazebo robot sdf model to the run folder and update its parameters
-        gazebo_robot_model_sdf_tree = et.parse(original_gazebo_robot_model_sdf_path)
-        gazebo_robot_model_sdf_root = gazebo_robot_model_sdf_tree.getroot()
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/samples")[0].text = str(int(laser_scan_fov_deg))
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/min_angle")[0].text = str(float(-laser_scan_fov_rad/2))
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/max_angle")[0].text = str(float(+laser_scan_fov_rad/2))
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/range/max")[0].text = str(float(laser_scan_max_range))
-        gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/plugin[@name='turtlebot3_laserscan_realistic']/frameName")[0].text = "base_scan_realistic"
-        if beta_1 == 0.0 and beta_2 == 0.0 and beta_3 == 0.0 and beta_4 == 0.0:
-            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/odometrySource")[0].text = "world"
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha1")[0].text = str(beta_1)
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha2")[0].text = str(beta_2)
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha3")[0].text = str(beta_3)
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha4")[0].text = str(beta_4)
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/odometryTopic")[0].text = "odom"
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/odometryFrame")[0].text = "odom_realistic"
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/robotBaseFrame")[0].text = "base_footprint_realistic"
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/groundTruthParentFrame")[0].text = "map"
-        gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/groundTruthRobotBaseFrame")[0].text = "base_footprint_gt"
-        if not path.exists(path.dirname(gazebo_robot_model_sdf_path)):
-            os.makedirs(path.dirname(gazebo_robot_model_sdf_path))
-        gazebo_robot_model_sdf_tree.write(gazebo_robot_model_sdf_path)
+            # copy the configuration of the gazebo robot sdf model to the run folder and update its parameters
+            gazebo_robot_model_sdf_tree = et.parse(original_gazebo_robot_model_sdf_path)
+            gazebo_robot_model_sdf_root = gazebo_robot_model_sdf_tree.getroot()
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/samples")[0].text = str(int(laser_scan_fov_deg))
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/min_angle")[0].text = str(float(-laser_scan_fov_rad/2))
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/scan/horizontal/max_angle")[0].text = str(float(+laser_scan_fov_rad/2))
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/ray/range/max")[0].text = str(float(laser_scan_max_range))
+            gazebo_robot_model_sdf_root.findall(".//sensor[@name='lidar_sensor']/plugin[@name='turtlebot3_laserscan_realistic']/frameName")[0].text = "base_scan_realistic"
+            if beta_1 == 0.0 and beta_2 == 0.0 and beta_3 == 0.0 and beta_4 == 0.0:
+                gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/odometrySource")[0].text = "world"
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha1")[0].text = str(beta_1)
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha2")[0].text = str(beta_2)
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha3")[0].text = str(beta_3)
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/alpha4")[0].text = str(beta_4)
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/odometryTopic")[0].text = "odom"
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/odometryFrame")[0].text = "odom_realistic"
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/robotBaseFrame")[0].text = "base_footprint_realistic"
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/groundTruthParentFrame")[0].text = "map"
+            gazebo_robot_model_sdf_root.findall(".//plugin[@name='turtlebot3_diff_drive']/groundTruthRobotBaseFrame")[0].text = "base_footprint_gt"
+            if not path.exists(path.dirname(gazebo_robot_model_sdf_path)):
+                os.makedirs(path.dirname(gazebo_robot_model_sdf_path))
+            gazebo_robot_model_sdf_tree.write(gazebo_robot_model_sdf_path)
 
-        # copy the configuration of the gazebo robot model to the run folder
-        if not path.exists(path.dirname(gazebo_robot_model_config_path)):
-            os.makedirs(path.dirname(gazebo_robot_model_config_path))
-        shutil.copyfile(original_gazebo_robot_model_config_path, gazebo_robot_model_config_path)
+            # copy the configuration of the gazebo robot model to the run folder
+            if not path.exists(path.dirname(gazebo_robot_model_config_path)):
+                os.makedirs(path.dirname(gazebo_robot_model_config_path))
+            shutil.copyfile(original_gazebo_robot_model_config_path, gazebo_robot_model_config_path)
 
-        # copy the configuration of the robot urdf to the run folder and update the link names for ground truth data
-        robot_gt_urdf_tree = et.parse(original_robot_urdf_path)
-        robot_gt_urdf_root = robot_gt_urdf_tree.getroot()
-        for link_element in robot_gt_urdf_root.findall(".//link"):
-            link_element.attrib['name'] = "{}_gt".format(link_element.attrib['name'])
-        for joint_link_element in robot_gt_urdf_root.findall(".//*[@link]"):
-            joint_link_element.attrib['link'] = "{}_gt".format(joint_link_element.attrib['link'])
-        if not path.exists(path.dirname(self.robot_gt_urdf_path)):
-            os.makedirs(path.dirname(self.robot_gt_urdf_path))
-        robot_gt_urdf_tree.write(self.robot_gt_urdf_path)
+            # copy the configuration of the robot urdf to the run folder and update the link names for ground truth data
+            robot_gt_urdf_tree = et.parse(original_robot_urdf_path)
+            robot_gt_urdf_root = robot_gt_urdf_tree.getroot()
+            for link_element in robot_gt_urdf_root.findall(".//link"):
+                link_element.attrib['name'] = "{}_gt".format(link_element.attrib['name'])
+            for joint_link_element in robot_gt_urdf_root.findall(".//*[@link]"):
+                joint_link_element.attrib['link'] = "{}_gt".format(joint_link_element.attrib['link'])
+            if not path.exists(path.dirname(self.robot_gt_urdf_path)):
+                os.makedirs(path.dirname(self.robot_gt_urdf_path))
+            robot_gt_urdf_tree.write(self.robot_gt_urdf_path)
 
-        # copy the configuration of the robot urdf to the run folder and update the link names for realistic data
-        robot_realistic_urdf_tree = et.parse(original_robot_urdf_path)
-        robot_realistic_urdf_root = robot_realistic_urdf_tree.getroot()
-        for link_element in robot_realistic_urdf_root.findall(".//link"):
-            link_element.attrib['name'] = "{}_realistic".format(link_element.attrib['name'])
-        for joint_link_element in robot_realistic_urdf_root.findall(".//*[@link]"):
-            joint_link_element.attrib['link'] = "{}_realistic".format(joint_link_element.attrib['link'])
-        if not path.exists(path.dirname(self.robot_realistic_urdf_path)):
-            os.makedirs(path.dirname(self.robot_realistic_urdf_path))
-        robot_realistic_urdf_tree.write(self.robot_realistic_urdf_path)
+            # copy the configuration of the robot urdf to the run folder and update the link names for realistic data
+            robot_realistic_urdf_tree = et.parse(original_robot_urdf_path)
+            robot_realistic_urdf_root = robot_realistic_urdf_tree.getroot()
+            for link_element in robot_realistic_urdf_root.findall(".//link"):
+                link_element.attrib['name'] = "{}_realistic".format(link_element.attrib['name'])
+            for joint_link_element in robot_realistic_urdf_root.findall(".//*[@link]"):
+                joint_link_element.attrib['link'] = "{}_realistic".format(joint_link_element.attrib['link'])
+            if not path.exists(path.dirname(self.robot_realistic_urdf_path)):
+                os.makedirs(path.dirname(self.robot_realistic_urdf_path))
+            robot_realistic_urdf_tree.write(self.robot_realistic_urdf_path)
 
         # write run info to file
         run_info_dict = dict()
@@ -270,12 +294,27 @@ class BenchmarkRun(object):
         ground_truth_map_server_params = {
             'map': self.ground_truth_map_info_path,
         }
-        environment_params = {
-            'world_model_file': self.gazebo_world_model_path,
-            'robot_gt_urdf_file': self.robot_gt_urdf_path,
-            'robot_realistic_urdf_file': self.robot_realistic_urdf_path,
-            'headless': True,
-        }
+
+        if self.environment_type == 'dataset':
+            navigation_params = None
+            simulated_environment_params = None
+            recorded_environment_params = {
+                'rosbag_file_path': self.real_data_rosbag_path,
+            }
+        elif self.environment_type == 'simulation':
+            recorded_environment_params = None
+            simulated_environment_params = {
+                'world_model_file': self.gazebo_world_model_path,
+                'robot_gt_urdf_file': self.robot_gt_urdf_path,
+                'robot_realistic_urdf_file': self.robot_realistic_urdf_path,
+                'headless': True,
+            }
+            navigation_params = {
+                'params_file': self.move_base_configuration_path,
+            }
+        else:
+            raise ValueError()
+
         if self.slam_node == 'gmapping':
             slam_params = {
                 'params_file': self.gmapping_configuration_path,
@@ -286,9 +325,7 @@ class BenchmarkRun(object):
             }
         else:
             raise ValueError()
-        navigation_params = {
-            'params_file': self.move_base_configuration_path,
-        }
+
         supervisor_params = {
             'params_file': self.supervisor_configuration_path,
         }
@@ -299,7 +336,16 @@ class BenchmarkRun(object):
 
         # declare components
         roscore = Component('roscore', 'slam_performance_modelling', 'roscore.launch')
-        environment = Component('gazebo', 'slam_performance_modelling', 'gazebo.launch', environment_params)
+
+        if self.environment_type == 'dataset':
+            environment = Component('rosbag_player', 'slam_performance_modelling', 'rosbag_player.launch', recorded_environment_params)
+            navigation = None
+        elif self.environment_type == 'simulation':
+            environment = Component('gazebo', 'slam_performance_modelling', 'gazebo.launch', simulated_environment_params)
+            navigation = Component('move_base', 'slam_performance_modelling', 'move_base.launch', navigation_params)
+        else:
+            raise ValueError()
+
         rviz = Component('rviz', 'slam_performance_modelling', 'rviz.launch', rviz_params)
         recorder_benchmark_data = Component('recorder_sensor_data', 'slam_performance_modelling', 'rosbag_recorder.launch', recorder_benchmark_data_params)
         if self.slam_node == 'gmapping':
@@ -309,7 +355,6 @@ class BenchmarkRun(object):
         else:
             raise ValueError()
         ground_truth_map_server = Component('ground_truth_map_server', 'slam_performance_modelling', 'ground_truth_map_server.launch', ground_truth_map_server_params)
-        navigation = Component('move_base', 'slam_performance_modelling', 'move_base.launch', navigation_params)
         supervisor = Component('supervisor', 'slam_performance_modelling', 'slam_benchmark_supervisor.launch', supervisor_params)
 
         # set gazebo's environment variables
@@ -327,13 +372,21 @@ class BenchmarkRun(object):
         recorder_benchmark_data.launch()
         slam.launch()
         ground_truth_map_server.launch()
-        navigation.launch()
+        if self.environment_type == 'simulation':
+            navigation.launch()
         supervisor.launch()
 
         # launch components and wait for the supervisor to finish
-        self.log(event="waiting_supervisor_finish")
-        supervisor.wait_to_finish()
-        self.log(event="supervisor_shutdown")
+        if self.environment_type == 'dataset':
+            self.log(event="waiting_recorded_dataset_finish")
+            environment.wait_to_finish()
+            self.log(event="recorded_dataset_shutdown")
+        elif self.environment_type == 'simulation':
+            self.log(event="waiting_supervisor_finish")
+            supervisor.wait_to_finish()
+            self.log(event="supervisor_shutdown")
+        else:
+            raise ValueError()
 
         # check if the rosnode is still ok, otherwise the ros infrastructure has been shutdown and the benchmark is aborted
         if rospy.is_shutdown():
@@ -341,12 +394,17 @@ class BenchmarkRun(object):
             self.aborted = True
 
         # shut down components
+        if self.environment_type == 'dataset':
+            supervisor.shutdown()
+        elif self.environment_type == 'simulation':
+            navigation.shutdown()
+            environment.shutdown()
+        else:
+            raise ValueError()
         ground_truth_map_server.shutdown()
-        navigation.shutdown()
         slam.shutdown()
         recorder_benchmark_data.shutdown()
         rviz.shutdown()
-        environment.shutdown()
         roscore.shutdown()
         print_info("execute_run: components shutdown completed")
 

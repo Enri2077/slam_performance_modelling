@@ -10,7 +10,8 @@ import yaml
 from performance_modelling_py.environment.ground_truth_map import GroundTruthMap
 
 from performance_modelling_py.utils import print_info, print_error
-from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics
+from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
+    estimated_pose_trajectory_length_metric
 from performance_modelling_py.metrics.computation_metrics import cpu_and_memory_usage_metrics
 # from performance_modelling_py.visualisation.trajectory_visualisation import save_trajectories_plot
 
@@ -28,6 +29,7 @@ def compute_metrics(run_output_folder):
     environment_folder = run_info['environment_folder']
     ground_truth_map_info_path = path.join(environment_folder, "data", "map.yaml")
     ground_truth_map = GroundTruthMap(ground_truth_map_info_path)
+    recorded_data_relations_path = path.join(environment_folder, "data", "recorded_data", "relations")
 
     # localization metrics
     estimated_correction_poses_path = path.join(run_output_folder, "benchmark_data", "estimated_correction_poses.csv")
@@ -38,19 +40,31 @@ def compute_metrics(run_output_folder):
     logs_folder_path = path.join(run_output_folder, "logs")
 
     print_info("trajectory_length")
-    metrics_result_dict['trajectory_length'] = trajectory_length_metric(ground_truth_poses_path)
+    if path.exists(ground_truth_poses_path):
+        metrics_result_dict['trajectory_length'] = trajectory_length_metric(ground_truth_poses_path)
+    else:
+        metrics_result_dict['trajectory_length'] = estimated_pose_trajectory_length_metric(estimated_poses_path)
 
-    # print_info("relative_localization_correction_error")
-    # metrics_result_dict['relative_localization_correction_error'] = relative_localization_error_metrics(path.join(logs_folder_path, "relative_localisation_correction_error"), estimated_correction_poses_path, ground_truth_poses_path)
+    # if path.exists(ground_truth_poses_path):
+    #     print_info("relative_localization_correction_error")
+    #     metrics_result_dict['relative_localization_correction_error'] = relative_localization_error_metrics(path.join(logs_folder_path, "relative_localisation_correction_error"), estimated_correction_poses_path, ground_truth_poses_path)
 
-    print_info("relative_localization_error")
-    metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics(path.join(logs_folder_path, "relative_localisation_error"), estimated_poses_path, ground_truth_poses_path)
+    if path.exists(ground_truth_poses_path):
+        print_info("relative_localization_error from ground truth")
+        metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics(path.join(logs_folder_path, "relative_localisation_error"), estimated_poses_path, ground_truth_poses_path)
 
-    # print_info("absolute_localization_correction_error")
-    # metrics_result_dict['absolute_localization_correction_error'] = absolute_localization_error_metrics(estimated_correction_poses_path, ground_truth_poses_path)
+    if path.exists(recorded_data_relations_path):
+        print_info("relative_localization_error from carmen relations")
+        metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_carmen_dataset(path.join(logs_folder_path, "relative_localisation_error_carmen_dataset"), estimated_poses_path, recorded_data_relations_path)
+        print("\n\n\n", metrics_result_dict['relative_localization_error'], "\n\n\n")
 
-    print_info("absolute_localization_error")
-    metrics_result_dict['absolute_localization_error'] = absolute_localization_error_metrics(estimated_poses_path, ground_truth_poses_path)
+    # if path.exists(ground_truth_poses_path):
+    #     print_info("absolute_localization_correction_error")
+    #     metrics_result_dict['absolute_localization_correction_error'] = absolute_localization_error_metrics(estimated_correction_poses_path, ground_truth_poses_path)
+
+    if path.exists(ground_truth_poses_path):
+        print_info("absolute_localization_error")
+        metrics_result_dict['absolute_localization_error'] = absolute_localization_error_metrics(estimated_poses_path, ground_truth_poses_path)
 
     # computation metrics
     print_info("cpu_and_memory_usage")
@@ -75,7 +89,7 @@ def compute_metrics(run_output_folder):
 
 
 if __name__ == '__main__':
-    run_folders = list(filter(path.isdir, glob.glob(path.expanduser("~/ds/elysium/performance_modelling/output/test_slam/*"))))
+    run_folders = list(filter(path.isdir, glob.glob(path.expanduser("~/ds/performance_modelling/output/test_slam_dataset/*"))))
     for progress, run_folder in enumerate(run_folders):
         print_info("main: compute_metrics {}% {}".format((progress + 1)*100/len(run_folders), run_folder))
         compute_metrics(path.expanduser(run_folder))

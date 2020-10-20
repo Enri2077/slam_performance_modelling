@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <arg name="rosbag_file_path"/>
+    <arg name="output" default="screen"/>
+
+    <param name="use_sim_time" value="true" />
+
+	<node name="rosbag_player"
+	      pkg="rosbag"
+	      type="play"
+	      output="$(arg output)"
+	      args="$(arg rosbag_file_path) --clock"
+    />
+
+</launch>
