@@ -417,12 +417,14 @@ class BenchmarkRun(object):
 
         # compute all relevant metrics and visualisations
         # noinspection PyBroadException
-        try:
-            self.log(event="start_compute_metrics")
-            compute_metrics(self.run_output_folder)
-        except:
-            print_error("failed metrics computation")
-            print_error(traceback.format_exc())
+        # try:
+        #     self.log(event="start_compute_metrics")
+        #     compute_metrics(self.run_output_folder)
+        # except KeyboardInterrupt:
+        #     print_info("\nmetrics computation interrupted")
+        # except:
+        #     print_error("failed metrics computation")
+        #     print_error(traceback.format_exc())
 
         self.log(event="run_end")
         print_info("run {run_id} completed".format(run_id=self.run_id))
