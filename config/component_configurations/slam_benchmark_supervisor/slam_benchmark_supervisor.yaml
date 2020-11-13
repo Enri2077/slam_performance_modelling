@@ -14,6 +14,7 @@ environment_type: 'simulation'
 
 # topic names
 scan_topic: /scan
+scan_gt_topic: /scan_gt
 amcl_particles_topic: /particlecloud
 estimated_pose_correction_topic: /gmapping_pose
 ground_truth_pose_topic: /base_footprint_gt

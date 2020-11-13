@@ -65,6 +65,7 @@ class SlamBenchmarkSupervisor:
 
         # topics, services, actions, entities and frames names
         scan_topic = rospy.get_param('~scan_topic')
+        scan_gt_topic = rospy.get_param('~scan_gt_topic')
         ground_truth_pose_topic = rospy.get_param('~ground_truth_pose_topic')
         save_map_service = rospy.get_param('~save_map_service')
         serialize_map_service = rospy.get_param('~serialize_map_service')
@@ -128,6 +129,7 @@ class SlamBenchmarkSupervisor:
         self.estimated_correction_poses_file_path = path.join(self.benchmark_data_folder, "estimated_correction_poses.csv")
         self.ground_truth_poses_file_path = path.join(self.benchmark_data_folder, "ground_truth_poses.csv")
         self.scans_file_path = path.join(self.benchmark_data_folder, "scans.csv")
+        self.scans_gt_file_path = path.join(self.benchmark_data_folder, "scans_gt.csv")
         self.run_events_file_path = path.join(self.benchmark_data_folder, "run_events.csv")
         self.init_run_events_file()
 
@@ -157,6 +159,7 @@ class SlamBenchmarkSupervisor:
 
         # setup subscribers
         rospy.Subscriber(scan_topic, LaserScan, self.scan_callback, queue_size=1)
+        rospy.Subscriber(scan_gt_topic, LaserScan, self.scan_gt_callback, queue_size=1)
         rospy.Subscriber(estimated_pose_correction_topic, PoseWithCovarianceStamped, self.estimated_pose_correction_callback, queue_size=1)
         if self.environment_type == 'simulation':
             rospy.Subscriber(ground_truth_pose_topic, Odometry, self.ground_truth_pose_callback, queue_size=1)
@@ -379,6 +382,21 @@ class SlamBenchmarkSupervisor:
 
         msg_time = laser_scan_msg.header.stamp.to_sec()
         with open(self.scans_file_path, 'a') as scans_file:
+            scans_file.write("{t}, {angle_min}, {angle_max}, {angle_increment}, {range_min}, {range_max}, {ranges}\n".format(
+                t=msg_time,
+                angle_min=laser_scan_msg.angle_min,
+                angle_max=laser_scan_msg.angle_max,
+                angle_increment=laser_scan_msg.angle_increment,
+                range_min=laser_scan_msg.range_min,
+                range_max=laser_scan_msg.range_max,
+                ranges=', '.join(map(str, laser_scan_msg.ranges))))
+
+    def scan_gt_callback(self, laser_scan_msg):
+        if not self.run_started:
+            return
+
+        msg_time = laser_scan_msg.header.stamp.to_sec()
+        with open(self.scans_gt_file_path, 'a') as scans_file:
             scans_file.write("{t}, {angle_min}, {angle_max}, {angle_increment}, {range_min}, {range_max}, {ranges}\n".format(
                 t=msg_time,
                 angle_min=laser_scan_msg.angle_min,
