@@ -6,4 +6,4 @@ docker build \
   --build-arg user_gid=`id -g` \
   --build-arg user_group=`id -g -n $USER` \
   --no-cache \
-  -t ${USER}/slam_benchmark:v10 .
+  -t ${USER}/slam_benchmark:v11 .
