@@ -61,10 +61,10 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
         metrics_result_dict = dict()
 
     # geometric_similarity
-    if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:
-        if environment_type == 'simulation':
-            print_info("geometric_similarity (simulation) {}".format(run_output_folder))
-            metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, recompute=recompute_all_metrics)
+    # if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:  # TODO temporarily recompute geometric similarity
+    if environment_type == 'simulation':
+        print_info("geometric_similarity (simulation) {}".format(run_output_folder))
+        metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, recompute=recompute_all_metrics)
 
     # absolute_error_vs_scan_range(estimated_poses_path, ground_truth_poses_path, scans_file_path)
 
