@@ -118,7 +118,6 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         parameter_names.add('environment_name')
         run_record['environment_name'] = path.basename(path.abspath(run_info['environment_folder']))
         run_record['run_folder'] = run_folder
-        print(run_folder)
 
         # collect per waypoint metric results
         geometric_similarity_per_waypoint_dict = dict()
