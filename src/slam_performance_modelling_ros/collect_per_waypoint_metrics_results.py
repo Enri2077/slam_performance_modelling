@@ -143,10 +143,13 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             run_record_per_waypoint = run_record.copy()
 
             assert('waypoint_start_time' not in run_record_per_waypoint)
-            run_record_per_waypoint['waypoint_start_time'] = waypoint_start_time
-            run_record_per_waypoint['geometric_similarity_mean_of_traces'] = get_yaml_by_path(geometric_similarity_per_waypoint_dict, [waypoint_start_time, 'mean_of_traces'])
             run_record_per_waypoint['relative_localization_error_translation_mean'] = get_yaml_by_path(relative_localization_error_per_waypoint_dict, [waypoint_start_time, 'random_relations', 'translation', 'mean'])
             run_record_per_waypoint['relative_localization_error_rotation_mean'] = get_yaml_by_path(relative_localization_error_per_waypoint_dict, [waypoint_start_time, 'random_relations','rotation', 'mean'])
+
+            all_geometric_similarity_metrics = get_yaml_by_path(geometric_similarity_per_waypoint_dict, [waypoint_start_time])
+            if all_geometric_similarity_metrics is not None:
+                for geometric_similarity_metric_name, geometric_similarity_metric_value in all_geometric_similarity_metrics.items():
+                    run_record_per_waypoint['geometric_similarity_' + geometric_similarity_metric_name] = geometric_similarity_metric_value
 
             df = df.append(run_record_per_waypoint, ignore_index=True)
 
