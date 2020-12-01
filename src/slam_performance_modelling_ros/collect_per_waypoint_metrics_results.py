@@ -120,6 +120,13 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         run_record['run_folder'] = run_folder
 
         # collect per waypoint metric results
+        geometric_similarity_range_limit_per_waypoint_dict = dict()
+        geometric_similarity_range_limit_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity_range_limit', 'geometric_similarity_per_waypoint_list'])
+        if geometric_similarity_range_limit_per_waypoint_list is not None:
+            for geometric_similarity_range_limit_per_waypoint in geometric_similarity_range_limit_per_waypoint_list:
+                if geometric_similarity_range_limit_per_waypoint is not None and 'start_time' in geometric_similarity_range_limit_per_waypoint:
+                    geometric_similarity_range_limit_per_waypoint_dict[geometric_similarity_range_limit_per_waypoint['start_time']] = geometric_similarity_range_limit_per_waypoint
+
         geometric_similarity_per_waypoint_dict = dict()
         geometric_similarity_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity', 'geometric_similarity_per_waypoint_list'])
         if geometric_similarity_per_waypoint_list is not None:
@@ -134,17 +141,17 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
                 if relative_localization_error_per_waypoint is not None and 'start_time' in relative_localization_error_per_waypoint:
                     relative_localization_error_per_waypoint_dict[relative_localization_error_per_waypoint['start_time']] = relative_localization_error_per_waypoint
 
-        for waypoint_start_time in geometric_similarity_per_waypoint_dict.keys():
-            if waypoint_start_time not in relative_localization_error_per_waypoint_dict:
-                # print_error("waypoint_start_time [{}] in geometric_similarity_per_waypoint_dict but not in relative_localization_error_per_waypoint_dict".format(waypoint_start_time))
-                # no_output = False
-                continue
-
+        for waypoint_start_time in relative_localization_error_per_waypoint_dict.keys():
             run_record_per_waypoint = run_record.copy()
 
             assert('waypoint_start_time' not in run_record_per_waypoint)
             run_record_per_waypoint['relative_localization_error_translation_mean'] = get_yaml_by_path(relative_localization_error_per_waypoint_dict, [waypoint_start_time, 'random_relations', 'translation', 'mean'])
-            run_record_per_waypoint['relative_localization_error_rotation_mean'] = get_yaml_by_path(relative_localization_error_per_waypoint_dict, [waypoint_start_time, 'random_relations','rotation', 'mean'])
+            run_record_per_waypoint['relative_localization_error_rotation_mean'] = get_yaml_by_path(relative_localization_error_per_waypoint_dict, [waypoint_start_time, 'random_relations', 'rotation', 'mean'])
+
+            all_geometric_similarity_range_limit_metrics = get_yaml_by_path(geometric_similarity_range_limit_per_waypoint_dict, [waypoint_start_time])
+            if all_geometric_similarity_range_limit_metrics is not None:
+                for geometric_similarity_range_limit_metric_name, geometric_similarity_range_limit_metric_value in all_geometric_similarity_range_limit_metrics.items():
+                    run_record_per_waypoint['geometric_similarity_range_limit_' + geometric_similarity_range_limit_metric_name] = geometric_similarity_range_limit_metric_value
 
             all_geometric_similarity_metrics = get_yaml_by_path(geometric_similarity_per_waypoint_dict, [waypoint_start_time])
             if all_geometric_similarity_metrics is not None:
@@ -185,6 +192,3 @@ if __name__ == '__main__':
     run_data_df, params = collect_data(args.base_run_folder, args.invalidate_cache)
     print(run_data_df)
 
-    # import matplotlib.pyplot as plt
-    # plt.scatter(run_data_df.geometric_similarity_mean_of_traces, run_data_df.relative_localization_error_translation_mean)
-    # plt.show()

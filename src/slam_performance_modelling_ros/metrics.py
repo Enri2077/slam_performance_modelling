@@ -7,9 +7,7 @@ import argparse
 import glob
 import multiprocessing
 import os
-import random
 import sys
-import time
 import traceback
 from os import path
 import yaml
@@ -19,7 +17,6 @@ from performance_modelling_py.utils import print_info, print_error
 from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
     estimated_pose_trajectory_length_metric, relative_localization_error_metrics_for_each_waypoint, geometric_similarity_environment_metric_for_each_waypoint
 from performance_modelling_py.metrics.computation_metrics import cpu_and_memory_usage_metrics
-# from performance_modelling_py.visualisation.trajectory_visualisation import save_trajectories_plot
 
 
 def compute_metrics(run_output_folder, recompute_all_metrics=False):
@@ -33,6 +30,7 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
         run_info = yaml.safe_load(run_info_file)
 
     environment_folder = run_info['environment_folder']
+    laser_scan_max_range = run_info['run_parameters']['laser_scan_max_range']
     benchmark_configuration = run_info['benchmark_configuration'] if 'benchmark_configuration' in run_info else None
     environment_type = benchmark_configuration['environment_type'] if benchmark_configuration is not None and 'environment_type' in benchmark_configuration else 'simulation'
     recorded_data_relations_path = path.join(environment_folder, "data", "recorded_data", "relations")
@@ -51,6 +49,7 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
     metrics_result_folder_path = path.join(run_output_folder, "metric_results")
     metrics_result_file_path = path.join(metrics_result_folder_path, "metrics.yaml")
     geometric_similarity_file_path = path.join(metrics_result_folder_path, "geometric_similarity.csv")
+    geometric_similarity_range_limit_file_path = path.join(metrics_result_folder_path, "geometric_similarity_range_limit.csv")
     if not path.exists(metrics_result_folder_path):
         os.makedirs(metrics_result_folder_path)
 
@@ -61,10 +60,19 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
         metrics_result_dict = dict()
 
     # geometric_similarity
-    # if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:  # TODO temporarily recompute geometric similarity
+    # if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:  # TODO uncomment
     if environment_type == 'simulation':
         print_info("geometric_similarity (simulation) {}".format(run_output_folder))
-        metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, recompute=recompute_all_metrics)
+        metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
+
+    # geometric_similarity_range_limit
+    # if recompute_all_metrics or 'geometric_similarity_range_limit' not in metrics_result_dict:  # TODO uncomment
+    if environment_type == 'simulation':
+        if laser_scan_max_range != 30.0:
+            print_info("geometric_similarity_range_limit (simulation) {}".format(run_output_folder))
+            metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
+        else:
+            print_info("geometric_similarity_range_limit (simulation): same as geometric_similarity, skipped {}".format(run_output_folder))
 
     # absolute_error_vs_scan_range(estimated_poses_path, ground_truth_poses_path, scans_file_path)
 
