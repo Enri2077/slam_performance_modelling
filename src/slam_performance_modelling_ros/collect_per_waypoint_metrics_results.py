@@ -12,20 +12,11 @@ if sys.version_info.major < 3:
 import glob
 import argparse
 import pickle
-import sys
 import yaml
 import pandas as pd
 from os import path
 
 from performance_modelling_py.utils import print_info, print_error
-
-
-def cm_to_body_parts(*argv):
-    inch = 2.54
-    if isinstance(argv[0], tuple):
-        return tuple(x_cm / inch for x_cm in argv[0])
-    else:
-        return tuple(x_cm / inch for x_cm in argv)
 
 
 def get_simple_value(result_path):
@@ -67,6 +58,7 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
 
     run_folders = sorted(list(filter(path.isdir, glob.glob(path.abspath(base_run_folder) + '/*'))))
 
+    record_list = list()
     if invalidate_cache or not path.exists(cache_file_path):
         df = pd.DataFrame()
         parameter_names = set()
@@ -158,10 +150,13 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
                 for geometric_similarity_metric_name, geometric_similarity_metric_value in all_geometric_similarity_metrics.items():
                     run_record_per_waypoint['geometric_similarity_' + geometric_similarity_metric_name] = geometric_similarity_metric_value
 
-            df = df.append(run_record_per_waypoint, ignore_index=True)
+            record_list.append(run_record_per_waypoint)
+            # df = df.append(run_record_per_waypoint, ignore_index=True)
 
         print_info("collect_data: reading run data: {}%".format(int((i + 1)*100/len(run_folders))), replace_previous_line=no_output)
         no_output = True
+
+        df = pd.DataFrame(record_list)
 
         # save cache
         if cache_file_path is not None:
@@ -185,10 +180,12 @@ if __name__ == '__main__':
     parser.add_argument('-i', dest='invalidate_cache',
                         help='If set, all the data is re-read.',
                         action='store_true',
-                        default=True,
+                        default=True,  # TODO does nothing, repair or remove
                         required=False)
 
     args = parser.parse_args()
+    import time
+    s = time.time()
     run_data_df, params = collect_data(args.base_run_folder, args.invalidate_cache)
     print(run_data_df)
-
+    print("collect_data: ", time.time() - s, "s")
