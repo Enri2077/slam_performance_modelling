@@ -57,63 +57,65 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
     else:
         metrics_result_dict = dict()
 
+    run_id = path.basename(run_output_folder)
+
     # geometric_similarity
     if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:
         if environment_type == 'simulation':
-            print_info("geometric_similarity (simulation) {}".format(run_output_folder))
+            print_info("geometric_similarity (simulation) {}".format(run_id))
             metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
 
     # geometric_similarity_range_limit
-    # if recompute_all_metrics or 'geometric_similarity_range_limit' not in metrics_result_dict:  # TODO uncomment
-    if environment_type == 'simulation':
-        if laser_scan_max_range != 30.0:
-            print_info("geometric_similarity_range_limit (simulation) {}".format(run_output_folder))
-            metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
-        else:
-            print_info("geometric_similarity_range_limit (simulation): copy from geometric_similarity {}".format(run_output_folder))
-            metrics_result_dict['geometric_similarity_range_limit'] = metrics_result_dict['geometric_similarity']
+    if recompute_all_metrics or 'geometric_similarity_range_limit' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            if laser_scan_max_range != 30.0:
+                print_info("geometric_similarity_range_limit (simulation) {}".format(run_id))
+                metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
+            else:
+                print_info("geometric_similarity_range_limit (simulation): copy from geometric_similarity {}".format(run_id))
+                metrics_result_dict['geometric_similarity_range_limit'] = metrics_result_dict['geometric_similarity']
 
     # geometric_similarity_sensor
     if recompute_all_metrics or 'geometric_similarity_sensor' not in metrics_result_dict:
         if environment_type == 'simulation':
-            print_info("geometric_similarity_sensor (simulation) {}".format(run_output_folder))
+            print_info("geometric_similarity_sensor (simulation) {}".format(run_id))
             metrics_result_dict['geometric_similarity_sensor'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_sensor"), geometric_similarity_sensor_file_path, scans_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
 
     # lidar_visibility
     if recompute_all_metrics or 'lidar_visibility' not in metrics_result_dict:
         if environment_type == 'simulation':
-            print_info("lidar_visibility (simulation) {}".format(run_output_folder))
+            print_info("lidar_visibility (simulation) {}".format(run_id))
             metrics_result_dict['lidar_visibility'] = lidar_visibility_environment_metric_for_each_waypoint(scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range)
 
     # trajectory_length
     if recompute_all_metrics or 'trajectory_length' not in metrics_result_dict:
         if environment_type == 'simulation':
-            print_info("trajectory_length (simulation) {}".format(run_output_folder))
+            print_info("trajectory_length (simulation) {}".format(run_id))
             metrics_result_dict['trajectory_length'] = trajectory_length_metric(ground_truth_poses_path)
 
         if environment_type == 'dataset':
-            print_info("trajectory_length (dataset) {}".format(run_output_folder))
+            print_info("trajectory_length (dataset) {}".format(run_id))
             metrics_result_dict['trajectory_length'] = estimated_pose_trajectory_length_metric(estimated_poses_path)
 
     # relative_localization_error
     if recompute_all_metrics or 'relative_localization_error' not in metrics_result_dict:
         if environment_type == 'simulation':
-            print_info("relative_localization_error (simulation) {}".format(run_output_folder))
+            print_info("relative_localization_error (simulation) {}".format(run_id))
             metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_for_each_waypoint(path.join(logs_folder_path, "relative_localisation_error"), estimated_poses_path, ground_truth_poses_path, run_events_file_path)
 
         if environment_type == 'dataset':
-            print_info("relative_localization_error (dataset) {}".format(run_output_folder))
+            print_info("relative_localization_error (dataset) {}".format(run_id))
             metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_carmen_dataset(path.join(logs_folder_path, "relative_localisation_error_carmen_dataset"), estimated_poses_path, recorded_data_relations_path)
 
     # absolute_localization_error
     if recompute_all_metrics or 'absolute_localization_error' not in metrics_result_dict:
         if environment_type == 'simulation':
-            print_info("absolute_localization_error (simulation) {}".format(run_output_folder))
+            print_info("absolute_localization_error (simulation) {}".format(run_id))
             metrics_result_dict['absolute_localization_error'] = absolute_localization_error_metrics(estimated_poses_path, ground_truth_poses_path)
 
     # cpu_and_memory_usage
     if recompute_all_metrics or 'cpu_and_memory_usage' not in metrics_result_dict:
-        print_info("cpu_and_memory_usage {}".format(run_output_folder))
+        print_info("cpu_and_memory_usage {}".format(run_id))
         ps_snapshots_folder_path = path.join(run_output_folder, "benchmark_data", "ps_snapshots")
         metrics_result_dict['cpu_and_memory_usage'] = cpu_and_memory_usage_metrics(ps_snapshots_folder_path)
 
@@ -123,7 +125,7 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
 
 
 def parallel_compute_metrics(run_output_folder, recompute_all_metrics):
-    print_info("start : compute_metrics {:3d}% {}".format(int((shared_progress.value + 1)*100/shared_num_runs.value), run_output_folder))
+    print_info("start : compute_metrics {:3d}% {}".format(int((shared_progress.value + 1)*100/shared_num_runs.value), path.basename(run_output_folder)))
 
     # noinspection PyBroadException
     try:
@@ -136,7 +138,7 @@ def parallel_compute_metrics(run_output_folder, recompute_all_metrics):
         print_error(traceback.format_exc())
 
     shared_progress.value += 1
-    print_info("finish: compute_metrics {:3d}% {}".format(int(shared_progress.value*100/shared_num_runs.value), run_output_folder))
+    print_info("finish: compute_metrics {:3d}% {}".format(int(shared_progress.value*100/shared_num_runs.value), path.basename(run_output_folder)))
 
 
 if __name__ == '__main__':
