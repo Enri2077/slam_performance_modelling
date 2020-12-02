@@ -133,6 +133,13 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
                 if geometric_similarity_sensor_per_waypoint is not None and 'start_time' in geometric_similarity_sensor_per_waypoint:
                     geometric_similarity_sensor_per_waypoint_dict[geometric_similarity_sensor_per_waypoint['start_time']] = geometric_similarity_sensor_per_waypoint
 
+        lidar_visibility_per_waypoint_dict = dict()
+        lidar_visibility_per_waypoint_list = get_yaml_by_path(metrics_dict, ['lidar_visibility', 'lidar_visibility_per_waypoint_list'])
+        if lidar_visibility_per_waypoint_list is not None:
+            for lidar_visibility_per_waypoint in lidar_visibility_per_waypoint_list:
+                if lidar_visibility_per_waypoint is not None and 'start_time' in lidar_visibility_per_waypoint:
+                    lidar_visibility_per_waypoint_dict[lidar_visibility_per_waypoint['start_time']] = lidar_visibility_per_waypoint
+
         relative_localization_error_per_waypoint_dict = dict()
         relative_localization_error_per_waypoint_list = get_yaml_by_path(metrics_dict, ['relative_localization_error', 'relative_localization_error_per_waypoint_list'])
         if relative_localization_error_per_waypoint_list is not None:
@@ -162,6 +169,11 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             if all_geometric_similarity_sensor_metrics is not None:
                 for geometric_similarity_sensor_metric_name, geometric_similarity_sensor_metric_value in all_geometric_similarity_sensor_metrics.items():
                     run_record_per_waypoint['geometric_similarity_sensor_' + geometric_similarity_sensor_metric_name] = geometric_similarity_sensor_metric_value
+
+            all_lidar_visibility_metrics = get_yaml_by_path(lidar_visibility_per_waypoint_dict, [waypoint_start_time])
+            if all_lidar_visibility_metrics is not None:
+                for lidar_visibility_metric_name, lidar_visibility_metric_value in all_lidar_visibility_metrics.items():
+                    run_record_per_waypoint['lidar_visibility_' + lidar_visibility_metric_name] = lidar_visibility_metric_value
 
             record_list.append(run_record_per_waypoint)
 

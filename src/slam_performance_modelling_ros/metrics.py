@@ -14,7 +14,7 @@ import yaml
 
 from performance_modelling_py.utils import print_info, print_error
 from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
-    estimated_pose_trajectory_length_metric, relative_localization_error_metrics_for_each_waypoint, geometric_similarity_environment_metric_for_each_waypoint
+    estimated_pose_trajectory_length_metric, relative_localization_error_metrics_for_each_waypoint, geometric_similarity_environment_metric_for_each_waypoint, lidar_visibility_environment_metric_for_each_waypoint
 from performance_modelling_py.metrics.computation_metrics import cpu_and_memory_usage_metrics
 
 
@@ -78,7 +78,11 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
             print_info("geometric_similarity_sensor (simulation) {}".format(run_output_folder))
             metrics_result_dict['geometric_similarity_sensor'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_sensor"), geometric_similarity_sensor_file_path, scans_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
 
-    # absolute_error_vs_scan_range(estimated_poses_path, ground_truth_poses_path, scans_file_path)
+    # lidar_visibility
+    if recompute_all_metrics or 'lidar_visibility' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("lidar_visibility (simulation) {}".format(run_output_folder))
+            metrics_result_dict['lidar_visibility'] = lidar_visibility_environment_metric_for_each_waypoint(scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range)
 
     # trajectory_length
     if recompute_all_metrics or 'trajectory_length' not in metrics_result_dict:
