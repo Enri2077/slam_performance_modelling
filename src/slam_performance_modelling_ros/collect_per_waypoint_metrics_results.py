@@ -112,6 +112,13 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         run_record['run_folder'] = run_folder
 
         # collect per waypoint metric results
+        geometric_similarity_per_waypoint_dict = dict()
+        geometric_similarity_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity', 'geometric_similarity_per_waypoint_list'])
+        if geometric_similarity_per_waypoint_list is not None:
+            for geometric_similarity_per_waypoint in geometric_similarity_per_waypoint_list:
+                if geometric_similarity_per_waypoint is not None and 'start_time' in geometric_similarity_per_waypoint:
+                    geometric_similarity_per_waypoint_dict[geometric_similarity_per_waypoint['start_time']] = geometric_similarity_per_waypoint
+
         geometric_similarity_range_limit_per_waypoint_dict = dict()
         geometric_similarity_range_limit_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity_range_limit', 'geometric_similarity_per_waypoint_list'])
         if geometric_similarity_range_limit_per_waypoint_list is not None:
@@ -119,12 +126,12 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
                 if geometric_similarity_range_limit_per_waypoint is not None and 'start_time' in geometric_similarity_range_limit_per_waypoint:
                     geometric_similarity_range_limit_per_waypoint_dict[geometric_similarity_range_limit_per_waypoint['start_time']] = geometric_similarity_range_limit_per_waypoint
 
-        geometric_similarity_per_waypoint_dict = dict()
-        geometric_similarity_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity', 'geometric_similarity_per_waypoint_list'])
-        if geometric_similarity_per_waypoint_list is not None:
-            for geometric_similarity_per_waypoint in geometric_similarity_per_waypoint_list:
-                if geometric_similarity_per_waypoint is not None and 'start_time' in geometric_similarity_per_waypoint:
-                    geometric_similarity_per_waypoint_dict[geometric_similarity_per_waypoint['start_time']] = geometric_similarity_per_waypoint
+        geometric_similarity_sensor_per_waypoint_dict = dict()
+        geometric_similarity_sensor_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity_sensor', 'geometric_similarity_per_waypoint_list'])
+        if geometric_similarity_sensor_per_waypoint_list is not None:
+            for geometric_similarity_sensor_per_waypoint in geometric_similarity_sensor_per_waypoint_list:
+                if geometric_similarity_sensor_per_waypoint is not None and 'start_time' in geometric_similarity_sensor_per_waypoint:
+                    geometric_similarity_sensor_per_waypoint_dict[geometric_similarity_sensor_per_waypoint['start_time']] = geometric_similarity_sensor_per_waypoint
 
         relative_localization_error_per_waypoint_dict = dict()
         relative_localization_error_per_waypoint_list = get_yaml_by_path(metrics_dict, ['relative_localization_error', 'relative_localization_error_per_waypoint_list'])
@@ -136,22 +143,27 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         for waypoint_start_time in relative_localization_error_per_waypoint_dict.keys():
             run_record_per_waypoint = run_record.copy()
 
-            assert('waypoint_start_time' not in run_record_per_waypoint)
+            run_record_per_waypoint['waypoint_start_time'] = waypoint_start_time
+
             run_record_per_waypoint['relative_localization_error_translation_mean'] = get_yaml_by_path(relative_localization_error_per_waypoint_dict, [waypoint_start_time, 'random_relations', 'translation', 'mean'])
             run_record_per_waypoint['relative_localization_error_rotation_mean'] = get_yaml_by_path(relative_localization_error_per_waypoint_dict, [waypoint_start_time, 'random_relations', 'rotation', 'mean'])
-
-            all_geometric_similarity_range_limit_metrics = get_yaml_by_path(geometric_similarity_range_limit_per_waypoint_dict, [waypoint_start_time])
-            if all_geometric_similarity_range_limit_metrics is not None:
-                for geometric_similarity_range_limit_metric_name, geometric_similarity_range_limit_metric_value in all_geometric_similarity_range_limit_metrics.items():
-                    run_record_per_waypoint['geometric_similarity_range_limit_' + geometric_similarity_range_limit_metric_name] = geometric_similarity_range_limit_metric_value
 
             all_geometric_similarity_metrics = get_yaml_by_path(geometric_similarity_per_waypoint_dict, [waypoint_start_time])
             if all_geometric_similarity_metrics is not None:
                 for geometric_similarity_metric_name, geometric_similarity_metric_value in all_geometric_similarity_metrics.items():
                     run_record_per_waypoint['geometric_similarity_' + geometric_similarity_metric_name] = geometric_similarity_metric_value
 
+            all_geometric_similarity_range_limit_metrics = get_yaml_by_path(geometric_similarity_range_limit_per_waypoint_dict, [waypoint_start_time])
+            if all_geometric_similarity_range_limit_metrics is not None:
+                for geometric_similarity_range_limit_metric_name, geometric_similarity_range_limit_metric_value in all_geometric_similarity_range_limit_metrics.items():
+                    run_record_per_waypoint['geometric_similarity_range_limit_' + geometric_similarity_range_limit_metric_name] = geometric_similarity_range_limit_metric_value
+
+            all_geometric_similarity_sensor_metrics = get_yaml_by_path(geometric_similarity_sensor_per_waypoint_dict, [waypoint_start_time])
+            if all_geometric_similarity_sensor_metrics is not None:
+                for geometric_similarity_sensor_metric_name, geometric_similarity_sensor_metric_value in all_geometric_similarity_sensor_metrics.items():
+                    run_record_per_waypoint['geometric_similarity_sensor_' + geometric_similarity_sensor_metric_name] = geometric_similarity_sensor_metric_value
+
             record_list.append(run_record_per_waypoint)
-            # df = df.append(run_record_per_waypoint, ignore_index=True)
 
         print_info("collect_data: reading run data: {}%".format(int((i + 1)*100/len(run_folders))), replace_previous_line=no_output)
         no_output = True
@@ -188,4 +200,5 @@ if __name__ == '__main__':
     s = time.time()
     run_data_df, params = collect_data(args.base_run_folder, args.invalidate_cache)
     print(run_data_df)
+    print(run_data_df.columns)
     print("collect_data: ", time.time() - s, "s")

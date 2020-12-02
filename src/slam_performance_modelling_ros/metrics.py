@@ -11,7 +11,6 @@ import sys
 import traceback
 from os import path
 import yaml
-from performance_modelling_py.environment.ground_truth_map import GroundTruthMap
 
 from performance_modelling_py.utils import print_info, print_error
 from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
@@ -34,8 +33,6 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
     benchmark_configuration = run_info['benchmark_configuration'] if 'benchmark_configuration' in run_info else None
     environment_type = benchmark_configuration['environment_type'] if benchmark_configuration is not None and 'environment_type' in benchmark_configuration else 'simulation'
     recorded_data_relations_path = path.join(environment_folder, "data", "recorded_data", "relations")
-    ground_truth_map_info_path = path.join(environment_folder, "data", "map.yaml")
-    ground_truth_map = GroundTruthMap(ground_truth_map_info_path)
 
     # input files
     estimated_poses_path = path.join(run_output_folder, "benchmark_data", "estimated_poses.csv")
@@ -50,6 +47,7 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
     metrics_result_file_path = path.join(metrics_result_folder_path, "metrics.yaml")
     geometric_similarity_file_path = path.join(metrics_result_folder_path, "geometric_similarity.csv")
     geometric_similarity_range_limit_file_path = path.join(metrics_result_folder_path, "geometric_similarity_range_limit.csv")
+    geometric_similarity_sensor_file_path = path.join(metrics_result_folder_path, "geometric_similarity_sensor.csv")
     if not path.exists(metrics_result_folder_path):
         os.makedirs(metrics_result_folder_path)
 
@@ -60,19 +58,25 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
         metrics_result_dict = dict()
 
     # geometric_similarity
-    # if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:  # TODO uncomment
-    if environment_type == 'simulation':
-        print_info("geometric_similarity (simulation) {}".format(run_output_folder))
-        metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
+    if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("geometric_similarity (simulation) {}".format(run_output_folder))
+            metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
 
     # geometric_similarity_range_limit
-    # if recompute_all_metrics or 'geometric_similarity_range_limit' not in metrics_result_dict:  # TODO uncomment
-    if environment_type == 'simulation':
-        if laser_scan_max_range != 30.0:
-            print_info("geometric_similarity_range_limit (simulation) {}".format(run_output_folder))
-            metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
-        else:
-            print_info("geometric_similarity_range_limit (simulation): same as geometric_similarity, skipped {}".format(run_output_folder))
+    if recompute_all_metrics or 'geometric_similarity_range_limit' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            if laser_scan_max_range != 30.0:
+                print_info("geometric_similarity_range_limit (simulation) {}".format(run_output_folder))
+                metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
+            else:
+                print_info("geometric_similarity_range_limit (simulation): same as geometric_similarity, skipped {}".format(run_output_folder))
+
+    # geometric_similarity_sensor
+    if recompute_all_metrics or 'geometric_similarity_sensor' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("geometric_similarity_sensor (simulation) {}".format(run_output_folder))
+            metrics_result_dict['geometric_similarity_sensor'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_sensor"), geometric_similarity_sensor_file_path, scans_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
 
     # absolute_error_vs_scan_range(estimated_poses_path, ground_truth_poses_path, scans_file_path)
 
