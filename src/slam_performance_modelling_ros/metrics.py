@@ -58,10 +58,10 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
         metrics_result_dict = dict()
 
     # geometric_similarity
-    # if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:  # TODO uncomment
-    if environment_type == 'simulation':
-        print_info("geometric_similarity (simulation) {}".format(run_output_folder))
-        metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
+    if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("geometric_similarity (simulation) {}".format(run_output_folder))
+            metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
 
     # geometric_similarity_range_limit
     # if recompute_all_metrics or 'geometric_similarity_range_limit' not in metrics_result_dict:  # TODO uncomment
@@ -70,13 +70,14 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
             print_info("geometric_similarity_range_limit (simulation) {}".format(run_output_folder))
             metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
         else:
-            print_info("geometric_similarity_range_limit (simulation): same as geometric_similarity, skipped {}".format(run_output_folder))
+            print_info("geometric_similarity_range_limit (simulation): copy from geometric_similarity {}".format(run_output_folder))
+            metrics_result_dict['geometric_similarity_range_limit'] = metrics_result_dict['geometric_similarity']
 
     # geometric_similarity_sensor
-    # if recompute_all_metrics or 'geometric_similarity_sensor' not in metrics_result_dict:  # TODO uncomment
-    if environment_type == 'simulation':
-        print_info("geometric_similarity_sensor (simulation) {}".format(run_output_folder))
-        metrics_result_dict['geometric_similarity_sensor'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_sensor"), geometric_similarity_sensor_file_path, scans_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
+    if recompute_all_metrics or 'geometric_similarity_sensor' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("geometric_similarity_sensor (simulation) {}".format(run_output_folder))
+            metrics_result_dict['geometric_similarity_sensor'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_sensor"), geometric_similarity_sensor_file_path, scans_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
 
     # lidar_visibility
     if recompute_all_metrics or 'lidar_visibility' not in metrics_result_dict:
