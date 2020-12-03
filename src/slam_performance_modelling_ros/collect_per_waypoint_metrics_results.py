@@ -177,16 +177,16 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
 
             record_list.append(run_record_per_waypoint)
 
-        print_info("collect_data: reading run data: {}%".format(int((i + 1)*100/len(run_folders))), replace_previous_line=no_output)
+        print_info("collect_data: reading run data: {}% {}/{} {}".format(int((i + 1)*100/len(run_folders)), i, len(run_folders), path.basename(run_folder)), replace_previous_line=no_output)
         no_output = True
 
-        df = pd.DataFrame(record_list)
+    df = pd.DataFrame(record_list)
 
-        # save cache
-        if cache_file_path is not None:
-            cache = {'df': df, 'parameter_names': parameter_names}
-            with open(cache_file_path, 'wb') as f:
-                pickle.dump(cache, f, protocol=2)
+    # save cache
+    if cache_file_path is not None:
+        cache = {'df': df, 'parameter_names': parameter_names}
+        with open(cache_file_path, 'wb') as f:
+            pickle.dump(cache, f, protocol=2)
 
     return df, parameter_names
 
