@@ -1,0 +1,34 @@
+components_configurations_folder: ~/w/catkin_ws/src/slam_performance_modelling/config/component_configurations
+gazebo_model_path_env_var: [~/ds/performance_modelling/aws-robomaker-small-warehouse-world/models]
+gazebo_resource_path_env_var: [~/ds/performance_modelling/aws-robomaker-small-warehouse-world]
+gazebo_plugin_path_env_var: [~/w/catkin_ws/build/gazebo_plugins/]
+source_workspace_path: ~/w/catkin_ws/src/
+
+supervisor_component: slam_benchmark_supervisor
+
+random_traversal_path: true
+
+components_configuration:
+  supervisor: slam_benchmark_supervisor/slam_benchmark_supervisor.yaml
+  slam_toolbox: slam_toolbox/slam_toolbox_online_async.yaml
+  gmapping: gmapping/gmapping.yaml
+  move_base: move_base/move_base_tb3.yaml
+
+combinatorial_parameters:
+  slam_node: [gmapping]
+  particles: [30]
+  linear_angular_update: [[0.2, 0.1], [0.5, 0.5]]
+  beta: [
+    [0.25, 0.0, 0.25, 0.0], 
+    [0.5, 0.0, 0.5, 0.0], 
+    [0.75, 0.0, 0.75, 0.0], 
+    [1.0, 0.0, 1.0, 0.0], 
+    [1.25, 0.0, 1.25, 0.0], 
+    [1.5, 0.0, 1.5, 0.0], 
+    [1.75, 0.0, 1.75, 0.0],
+  ]
+  laser_scan_max_range: [3.5, 30.0]
+  laser_scan_fov_deg: [90, 359]
+  map_resolution: [0.05]
+  fewer_nav_goals: [true]
+  goal_tolerance: [[0.3, 3.142]]
