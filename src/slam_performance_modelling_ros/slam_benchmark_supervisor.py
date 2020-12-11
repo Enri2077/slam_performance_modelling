@@ -206,10 +206,11 @@ class SlamBenchmarkSupervisor:
                 if i != j:
                     costs[i][j] = minimum_length_costs[i][j]
 
-        # in case the graph has multiple unconnected components, remove the components with less than two nodes
-        too_small_voronoi_graph_components = list(filter(lambda component: len(component) < 2, nx.connected_components(voronoi_graph)))
+        # in case the graph has multiple unconnected components, remove the components smaller than 10% of the total graph
+        too_small_voronoi_graph_components = list(filter(lambda component: len(component) < 0.1*len(voronoi_graph), nx.connected_components(voronoi_graph)))
 
         for graph_component in too_small_voronoi_graph_components:
+            print_info("ignoring {} nodes from unconnected components in the Voronoi graph".format(len(graph_component)))
             voronoi_graph.remove_nodes_from(graph_component)
 
         if len(voronoi_graph.nodes) < 2:
