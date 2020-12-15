@@ -14,7 +14,8 @@ import yaml
 
 from performance_modelling_py.utils import print_info, print_error
 from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
-    estimated_pose_trajectory_length_metric, relative_localization_error_metrics_for_each_waypoint, geometric_similarity_environment_metric_for_each_waypoint, lidar_visibility_environment_metric_for_each_waypoint
+    estimated_pose_trajectory_length_metric, relative_localization_error_metrics_for_each_waypoint, geometric_similarity_environment_metric_for_each_waypoint, lidar_visibility_environment_metric_for_each_waypoint, \
+    relative_localization_error_metrics
 from performance_modelling_py.metrics.computation_metrics import cpu_and_memory_usage_metrics
 
 
@@ -87,6 +88,28 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
             print_info("lidar_visibility (simulation) {}".format(run_id))
             metrics_result_dict['lidar_visibility'] = lidar_visibility_environment_metric_for_each_waypoint(scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range)
 
+    # relative_localization_error
+    if recompute_all_metrics or 'relative_localization_error' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("relative_localization_error (simulation) {}".format(run_id))
+            metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_for_each_waypoint(path.join(logs_folder_path, "relative_localisation_error"), estimated_poses_path, ground_truth_poses_path, run_events_file_path)
+
+    # relative_localization_error_overall
+    if recompute_all_metrics or 'relative_localization_error_overall' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("relative_localization_error_overall (simulation) {}".format(run_id))
+            metrics_result_dict['relative_localization_error_overall'] = relative_localization_error_metrics(path.join(logs_folder_path, "relative_localization_error_overall"), estimated_poses_path, ground_truth_poses_path)
+
+        if environment_type == 'dataset':
+            print_info("relative_localization_error_overall (dataset) {}".format(run_id))
+            metrics_result_dict['relative_localization_error_overall'] = relative_localization_error_metrics_carmen_dataset(path.join(logs_folder_path, "relative_localisation_error_carmen_dataset"), estimated_poses_path, recorded_data_relations_path)
+
+    # absolute_localization_error
+    if recompute_all_metrics or 'absolute_localization_error' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("absolute_localization_error (simulation) {}".format(run_id))
+            metrics_result_dict['absolute_localization_error'] = absolute_localization_error_metrics(estimated_poses_path, ground_truth_poses_path)
+
     # trajectory_length
     if recompute_all_metrics or 'trajectory_length' not in metrics_result_dict:
         if environment_type == 'simulation':
@@ -96,22 +119,6 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
         if environment_type == 'dataset':
             print_info("trajectory_length (dataset) {}".format(run_id))
             metrics_result_dict['trajectory_length'] = estimated_pose_trajectory_length_metric(estimated_poses_path)
-
-    # relative_localization_error
-    if recompute_all_metrics or 'relative_localization_error' not in metrics_result_dict:
-        if environment_type == 'simulation':
-            print_info("relative_localization_error (simulation) {}".format(run_id))
-            metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_for_each_waypoint(path.join(logs_folder_path, "relative_localisation_error"), estimated_poses_path, ground_truth_poses_path, run_events_file_path)
-
-        if environment_type == 'dataset':
-            print_info("relative_localization_error (dataset) {}".format(run_id))
-            metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_carmen_dataset(path.join(logs_folder_path, "relative_localisation_error_carmen_dataset"), estimated_poses_path, recorded_data_relations_path)
-
-    # absolute_localization_error
-    if recompute_all_metrics or 'absolute_localization_error' not in metrics_result_dict:
-        if environment_type == 'simulation':
-            print_info("absolute_localization_error (simulation) {}".format(run_id))
-            metrics_result_dict['absolute_localization_error'] = absolute_localization_error_metrics(estimated_poses_path, ground_truth_poses_path)
 
     # cpu_and_memory_usage
     if recompute_all_metrics or 'cpu_and_memory_usage' not in metrics_result_dict:
@@ -166,7 +173,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    run_folders = list(filter(path.isdir, glob.glob(path.expanduser(args.base_run_folder))))
+    def is_completed_run_folder(p):
+        return path.isdir(p) and path.exists(path.join(p, "benchmark_data.bag"))
+
+    run_folders = list(filter(is_completed_run_folder, glob.glob(path.expanduser(args.base_run_folder))))
     num_runs = len(run_folders)
 
     if len(run_folders) == 0:
