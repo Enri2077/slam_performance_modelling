@@ -56,7 +56,10 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         print_error("collect_data: base_run_folder does not exists or is not a directory".format(base_run_folder))
         return None, None
 
-    run_folders = sorted(list(filter(path.isdir, glob.glob(path.abspath(base_run_folder) + '/*'))))
+    def is_completed_run_folder(p):
+        return path.isdir(p) and path.exists(path.join(p, "benchmark_data.bag"))
+
+    run_folders = sorted(list(filter(is_completed_run_folder, glob.glob(path.abspath(base_run_folder) + '/*'))))
 
     record_list = list()
     if invalidate_cache or not path.exists(cache_file_path):
