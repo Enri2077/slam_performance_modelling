@@ -11,6 +11,7 @@ import sys
 import traceback
 from os import path
 import yaml
+from yaml.constructor import ConstructorError
 
 from performance_modelling_py.utils import print_info, print_error
 from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
@@ -21,13 +22,19 @@ from performance_modelling_py.metrics.computation_metrics import cpu_and_memory_
 
 def compute_metrics(run_output_folder, recompute_all_metrics=False):
 
+    run_id = path.basename(run_output_folder)
+
     run_info_path = path.join(run_output_folder, "run_info.yaml")
     if not path.exists(run_info_path) or not path.isfile(run_info_path):
         print_error("run info file does not exists")
         return
 
-    with open(run_info_path) as run_info_file:
-        run_info = yaml.safe_load(run_info_file)
+    try:
+        with open(run_info_path) as run_info_file:
+            run_info = yaml.safe_load(run_info_file)
+    except ConstructorError:
+        print_error("Could not parse run_info.yaml for run {}".format(run_id))
+        return
 
     environment_folder = run_info['environment_folder']
     laser_scan_max_range = run_info['run_parameters']['laser_scan_max_range']
@@ -52,13 +59,13 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
     if not path.exists(metrics_result_folder_path):
         os.makedirs(metrics_result_folder_path)
 
+    metrics_result_dict = dict()
     if path.exists(metrics_result_file_path):
-        with open(metrics_result_file_path) as previous_metrics_result_file:
-            metrics_result_dict = yaml.safe_load(previous_metrics_result_file)
-    else:
-        metrics_result_dict = dict()
-
-    run_id = path.basename(run_output_folder)
+        try:
+            with open(metrics_result_file_path) as previous_metrics_result_file:
+                metrics_result_dict = yaml.safe_load(previous_metrics_result_file)
+        except ConstructorError:
+            print_error("Could not parse existing metrics file for run {}, recomputing all metrics".format(run_id))
 
     # geometric_similarity
     if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:
@@ -187,15 +194,4 @@ if __name__ == '__main__':
     with multiprocessing.Pool(processes=args.num_parallel_threads) as pool:
         pool.starmap(parallel_compute_metrics, zip(run_folders, [args.recompute_all_metrics]*num_runs))
 
-    # for progress, run_folder in enumerate(run_folders):
-    #     print_info("main: compute_metrics {:3d}% {}".format(int((progress + 1)*100/len(run_folders)), run_folder))
-    #     # noinspection PyBroadException
-    #     try:
-    #         compute_metrics(run_folder, recompute_all_metrics=args.recompute_all_metrics)
-    #     except KeyboardInterrupt:
-    #         print_info("\nmain: metrics computation interrupted")
-    #         break
-    #     except:
-    #         print_error("failed metrics computation")
-    #         print_error(traceback.format_exc())
     print_info("main: done")
