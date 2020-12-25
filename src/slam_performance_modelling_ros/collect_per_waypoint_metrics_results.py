@@ -83,8 +83,6 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         metrics_file_path = path.join(metric_results_folder, "metrics.yaml")
 
         if not path.exists(metric_results_folder):
-            print_error("collect_data: metric_results_folder does not exists [{}]".format(metric_results_folder))
-            no_output = False
             continue
         if not path.exists(run_info_file_path):
             print_error("collect_data: run_info file does not exists [{}]".format(run_info_file_path))
@@ -115,12 +113,15 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         run_record['run_folder'] = run_folder
 
         # collect per waypoint metric results
+        waypoint_start_times = set()
+
         geometric_similarity_per_waypoint_dict = dict()
         geometric_similarity_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity', 'geometric_similarity_per_waypoint_list'])
         if geometric_similarity_per_waypoint_list is not None:
             for geometric_similarity_per_waypoint in geometric_similarity_per_waypoint_list:
                 if geometric_similarity_per_waypoint is not None and 'start_time' in geometric_similarity_per_waypoint:
                     geometric_similarity_per_waypoint_dict[geometric_similarity_per_waypoint['start_time']] = geometric_similarity_per_waypoint
+                    waypoint_start_times.add(geometric_similarity_per_waypoint['start_time'])
 
         geometric_similarity_range_limit_per_waypoint_dict = dict()
         geometric_similarity_range_limit_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity_range_limit', 'geometric_similarity_per_waypoint_list'])
@@ -128,6 +129,7 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             for geometric_similarity_range_limit_per_waypoint in geometric_similarity_range_limit_per_waypoint_list:
                 if geometric_similarity_range_limit_per_waypoint is not None and 'start_time' in geometric_similarity_range_limit_per_waypoint:
                     geometric_similarity_range_limit_per_waypoint_dict[geometric_similarity_range_limit_per_waypoint['start_time']] = geometric_similarity_range_limit_per_waypoint
+                    waypoint_start_times.add(geometric_similarity_range_limit_per_waypoint['start_time'])
 
         geometric_similarity_sensor_per_waypoint_dict = dict()
         geometric_similarity_sensor_per_waypoint_list = get_yaml_by_path(metrics_dict, ['geometric_similarity_sensor', 'geometric_similarity_per_waypoint_list'])
@@ -135,6 +137,7 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             for geometric_similarity_sensor_per_waypoint in geometric_similarity_sensor_per_waypoint_list:
                 if geometric_similarity_sensor_per_waypoint is not None and 'start_time' in geometric_similarity_sensor_per_waypoint:
                     geometric_similarity_sensor_per_waypoint_dict[geometric_similarity_sensor_per_waypoint['start_time']] = geometric_similarity_sensor_per_waypoint
+                    waypoint_start_times.add(geometric_similarity_sensor_per_waypoint['start_time'])
 
         lidar_visibility_per_waypoint_dict = dict()
         lidar_visibility_per_waypoint_list = get_yaml_by_path(metrics_dict, ['lidar_visibility', 'lidar_visibility_per_waypoint_list'])
@@ -142,6 +145,7 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             for lidar_visibility_per_waypoint in lidar_visibility_per_waypoint_list:
                 if lidar_visibility_per_waypoint is not None and 'start_time' in lidar_visibility_per_waypoint:
                     lidar_visibility_per_waypoint_dict[lidar_visibility_per_waypoint['start_time']] = lidar_visibility_per_waypoint
+                    waypoint_start_times.add(lidar_visibility_per_waypoint['start_time'])
 
         relative_localization_error_per_waypoint_dict = dict()
         relative_localization_error_per_waypoint_list = get_yaml_by_path(metrics_dict, ['relative_localization_error', 'relative_localization_error_per_waypoint_list'])
@@ -149,8 +153,25 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             for relative_localization_error_per_waypoint in relative_localization_error_per_waypoint_list:
                 if relative_localization_error_per_waypoint is not None and 'start_time' in relative_localization_error_per_waypoint:
                     relative_localization_error_per_waypoint_dict[relative_localization_error_per_waypoint['start_time']] = relative_localization_error_per_waypoint
+                    waypoint_start_times.add(relative_localization_error_per_waypoint['start_time'])
 
-        for waypoint_start_time in relative_localization_error_per_waypoint_dict.keys():
+        waypoint_relative_localization_error_per_waypoint_dict = dict()
+        waypoint_relative_localization_error_per_waypoint_list = get_yaml_by_path(metrics_dict, ['waypoint_relative_localization_error', 'relative_localization_error_per_waypoint_list'])
+        if waypoint_relative_localization_error_per_waypoint_list is not None:
+            for waypoint_relative_localization_error_per_waypoint in waypoint_relative_localization_error_per_waypoint_list:
+                if waypoint_relative_localization_error_per_waypoint is not None and 'start_time' in waypoint_relative_localization_error_per_waypoint:
+                    waypoint_relative_localization_error_per_waypoint_dict[waypoint_relative_localization_error_per_waypoint['start_time']] = waypoint_relative_localization_error_per_waypoint
+                    waypoint_start_times.add(waypoint_relative_localization_error_per_waypoint['start_time'])
+
+        trajectory_length_per_waypoint_dict = dict()
+        trajectory_length_per_waypoint_list = get_yaml_by_path(metrics_dict, ['trajectory_length_per_waypoint', 'trajectory_length_per_waypoint_list'])
+        if trajectory_length_per_waypoint_list is not None:
+            for trajectory_length_per_waypoint in trajectory_length_per_waypoint_list:
+                if trajectory_length_per_waypoint is not None and 'start_time' in trajectory_length_per_waypoint:
+                    trajectory_length_per_waypoint_dict[trajectory_length_per_waypoint['start_time']] = trajectory_length_per_waypoint
+                    waypoint_start_times.add(trajectory_length_per_waypoint['start_time'])
+
+        for waypoint_start_time in waypoint_start_times:
             run_record_per_waypoint = run_record.copy()
 
             run_record_per_waypoint['waypoint_start_time'] = waypoint_start_time
@@ -177,6 +198,16 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             if all_lidar_visibility_metrics is not None:
                 for lidar_visibility_metric_name, lidar_visibility_metric_value in all_lidar_visibility_metrics.items():
                     run_record_per_waypoint['lidar_visibility_' + lidar_visibility_metric_name] = lidar_visibility_metric_value
+
+            all_waypoint_relative_localization_metrics = get_yaml_by_path(waypoint_relative_localization_error_per_waypoint_dict, [waypoint_start_time])
+            if all_waypoint_relative_localization_metrics is not None:
+                for all_waypoint_relative_localization_metric_name,  all_waypoint_relative_localization_metric_value in all_waypoint_relative_localization_metrics.items():
+                    run_record_per_waypoint['waypoint_relative_localization_error_' + all_waypoint_relative_localization_metric_name] = all_waypoint_relative_localization_metric_value
+
+            all_trajectory_length_metrics = get_yaml_by_path(trajectory_length_per_waypoint_dict, [waypoint_start_time])
+            if all_trajectory_length_metrics is not None:
+                for all_trajectory_length_metric_name,  all_trajectory_length_metric_value in all_trajectory_length_metrics.items():
+                    run_record_per_waypoint['trajectory_length_' + all_trajectory_length_metric_name] = all_trajectory_length_metric_value
 
             record_list.append(run_record_per_waypoint)
 
@@ -214,6 +245,7 @@ if __name__ == '__main__':
     import time
     s = time.time()
     run_data_df, params = collect_data(args.base_run_folder, args.invalidate_cache)
+    pd.options.display.width = 200
     print(run_data_df)
     print(run_data_df.columns)
     print("collect_data: ", time.time() - s, "s")
