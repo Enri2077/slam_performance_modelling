@@ -16,7 +16,7 @@ from yaml.constructor import ConstructorError
 from performance_modelling_py.utils import print_info, print_error
 from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
     estimated_pose_trajectory_length_metric, relative_localization_error_metrics_for_each_waypoint, geometric_similarity_environment_metric_for_each_waypoint, lidar_visibility_environment_metric_for_each_waypoint, \
-    relative_localization_error_metrics
+    relative_localization_error_metrics, waypoint_relative_localization_error_metrics_for_each_waypoint, trajectory_length_metric_per_waypoint
 from performance_modelling_py.metrics.computation_metrics import cpu_and_memory_usage_metrics
 
 
@@ -68,20 +68,20 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
             print_error("Could not parse existing metrics file for run {}, recomputing all metrics".format(run_id))
 
     # geometric_similarity
-    if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:
-        if environment_type == 'simulation':
-            print_info("geometric_similarity (simulation) {}".format(run_id))
-            metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
+    # if recompute_all_metrics or 'geometric_similarity' not in metrics_result_dict:
+    #     if environment_type == 'simulation':
+    #         print_info("geometric_similarity (simulation) {}".format(run_id))
+    #         metrics_result_dict['geometric_similarity'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity"), geometric_similarity_file_path, scans_gt_file_path, run_events_file_path, range_limit=30.0, recompute=recompute_all_metrics)
 
     # geometric_similarity_range_limit
     if recompute_all_metrics or 'geometric_similarity_range_limit' not in metrics_result_dict:
         if environment_type == 'simulation':
-            if laser_scan_max_range != 30.0:
-                print_info("geometric_similarity_range_limit (simulation) {}".format(run_id))
-                metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
-            else:
+            if laser_scan_max_range == 30.0 and 'geometric_similarity' in metrics_result_dict:
                 print_info("geometric_similarity_range_limit (simulation): copy from geometric_similarity {}".format(run_id))
                 metrics_result_dict['geometric_similarity_range_limit'] = metrics_result_dict['geometric_similarity']
+            else:
+                print_info("geometric_similarity_range_limit (simulation) {}".format(run_id))
+                metrics_result_dict['geometric_similarity_range_limit'] = geometric_similarity_environment_metric_for_each_waypoint(path.join(logs_folder_path, "geometric_similarity_range_limit"), geometric_similarity_range_limit_file_path, scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range, recompute=recompute_all_metrics)
 
     # geometric_similarity_sensor
     if recompute_all_metrics or 'geometric_similarity_sensor' not in metrics_result_dict:
@@ -95,21 +95,27 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
             print_info("lidar_visibility (simulation) {}".format(run_id))
             metrics_result_dict['lidar_visibility'] = lidar_visibility_environment_metric_for_each_waypoint(scans_gt_file_path, run_events_file_path, range_limit=laser_scan_max_range)
 
-    # relative_localization_error
-    if recompute_all_metrics or 'relative_localization_error' not in metrics_result_dict:
-        if environment_type == 'simulation':
-            print_info("relative_localization_error (simulation) {}".format(run_id))
-            metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_for_each_waypoint(path.join(logs_folder_path, "relative_localisation_error"), estimated_poses_path, ground_truth_poses_path, run_events_file_path)
+    # # relative_localization_error
+    # if recompute_all_metrics or 'relative_localization_error' not in metrics_result_dict:
+    #     if environment_type == 'simulation':
+    #         print_info("relative_localization_error (simulation) {}".format(run_id))
+    #         metrics_result_dict['relative_localization_error'] = relative_localization_error_metrics_for_each_waypoint(path.join(logs_folder_path, "relative_localisation_error"), estimated_poses_path, ground_truth_poses_path, run_events_file_path)
 
     # relative_localization_error_overall
-    if recompute_all_metrics or 'relative_localization_error_overall' not in metrics_result_dict:
-        if environment_type == 'simulation':
-            print_info("relative_localization_error_overall (simulation) {}".format(run_id))
-            metrics_result_dict['relative_localization_error_overall'] = relative_localization_error_metrics(path.join(logs_folder_path, "relative_localization_error_overall"), estimated_poses_path, ground_truth_poses_path)
+    # if recompute_all_metrics or 'relative_localization_error_overall' not in metrics_result_dict:
+    #     if environment_type == 'simulation':
+    #         print_info("relative_localization_error_overall (simulation) {}".format(run_id))
+    #         metrics_result_dict['relative_localization_error_overall'] = relative_localization_error_metrics(path.join(logs_folder_path, "relative_localization_error_overall"), estimated_poses_path, ground_truth_poses_path)
+    #
+    #     if environment_type == 'dataset':
+    #         print_info("relative_localization_error_overall (dataset) {}".format(run_id))
+    #         metrics_result_dict['relative_localization_error_overall'] = relative_localization_error_metrics_carmen_dataset(path.join(logs_folder_path, "relative_localisation_error_carmen_dataset"), estimated_poses_path, recorded_data_relations_path)
 
-        if environment_type == 'dataset':
-            print_info("relative_localization_error_overall (dataset) {}".format(run_id))
-            metrics_result_dict['relative_localization_error_overall'] = relative_localization_error_metrics_carmen_dataset(path.join(logs_folder_path, "relative_localisation_error_carmen_dataset"), estimated_poses_path, recorded_data_relations_path)
+    # waypoint_relative_localization_error
+    if recompute_all_metrics or 'waypoint_relative_localization_error' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("waypoint_relative_localization_error (simulation) {}".format(run_id))
+            metrics_result_dict['waypoint_relative_localization_error'] = waypoint_relative_localization_error_metrics_for_each_waypoint(estimated_poses_path, ground_truth_poses_path, run_events_file_path)
 
     # absolute_localization_error
     if recompute_all_metrics or 'absolute_localization_error' not in metrics_result_dict:
@@ -118,14 +124,14 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
             metrics_result_dict['absolute_localization_error'] = absolute_localization_error_metrics(estimated_poses_path, ground_truth_poses_path)
 
     # trajectory_length
-    if recompute_all_metrics or 'trajectory_length' not in metrics_result_dict:
+    if recompute_all_metrics or 'trajectory_length_per_waypoint' not in metrics_result_dict:
         if environment_type == 'simulation':
             print_info("trajectory_length (simulation) {}".format(run_id))
-            metrics_result_dict['trajectory_length'] = trajectory_length_metric(ground_truth_poses_path)
+            metrics_result_dict['trajectory_length_per_waypoint'] = trajectory_length_metric_per_waypoint(ground_truth_poses_path, run_events_file_path)
 
-        if environment_type == 'dataset':
-            print_info("trajectory_length (dataset) {}".format(run_id))
-            metrics_result_dict['trajectory_length'] = estimated_pose_trajectory_length_metric(estimated_poses_path)
+        # if environment_type == 'dataset':
+        #     print_info("trajectory_length (dataset) {}".format(run_id))
+        #     metrics_result_dict['trajectory_length'] = estimated_pose_trajectory_length_metric_per_waypoint(estimated_poses_path)
 
     # cpu_and_memory_usage
     if recompute_all_metrics or 'cpu_and_memory_usage' not in metrics_result_dict:
