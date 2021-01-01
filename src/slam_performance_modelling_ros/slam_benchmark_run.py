@@ -16,7 +16,7 @@ import numpy as np
 
 from performance_modelling_py.utils import backup_file_if_exists, print_info, print_error
 from performance_modelling_py.component_proxies.ros1_component import Component
-from slam_performance_modelling_ros.metrics import compute_metrics
+#from slam_performance_modelling_ros.metrics import compute_metrics
 from performance_modelling_py.benchmark_execution.log_software_versions import log_packages_and_repos
 
 
