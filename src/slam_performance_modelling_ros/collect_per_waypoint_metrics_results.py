@@ -79,7 +79,10 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
     no_output = True
     for i, run_folder in enumerate(run_folders):
         metric_results_folder = path.join(run_folder, "metric_results")
+        benchmark_data_bag_file_path = path.join(run_folder, "benchmark_data.bag")
+        run_events_file_path = path.join(run_folder, "benchmark_data", "run_events.csv")
         run_info_file_path = path.join(run_folder, "run_info.yaml")
+        original_run_info_file_path = path.join(run_folder, "run_info_original.yaml")
         metrics_file_path = path.join(metric_results_folder, "metrics.yaml")
 
         if not path.exists(metric_results_folder):
@@ -111,6 +114,17 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         parameter_names.add('environment_name')
         run_record['environment_name'] = path.basename(path.abspath(run_info['environment_folder']))
         run_record['run_folder'] = run_folder
+
+        if path.exists(original_run_info_file_path):
+            run_record['run_absolute_start_time'] = path.getmtime(original_run_info_file_path)
+        else:
+            run_record['run_absolute_start_time'] = path.getmtime(run_info_file_path)
+
+        if path.exists(run_events_file_path):
+            run_record['run_absolute_completion_time'] = path.getmtime(run_events_file_path)
+
+        if path.exists(benchmark_data_bag_file_path):
+            run_record['run_absolute_bag_completion_time'] = path.getmtime(benchmark_data_bag_file_path)
 
         # collect per waypoint metric results
         waypoint_start_times = set()
@@ -163,6 +177,14 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
                     waypoint_relative_localization_error_per_waypoint_dict[waypoint_relative_localization_error_per_waypoint['start_time']] = waypoint_relative_localization_error_per_waypoint
                     waypoint_start_times.add(waypoint_relative_localization_error_per_waypoint['start_time'])
 
+        waypoint_absolute_localization_error_per_waypoint_dict = dict()
+        waypoint_absolute_localization_error_per_waypoint_list = get_yaml_by_path(metrics_dict, ['waypoint_absolute_localization_error', 'absolute_error_per_waypoint_list'])
+        if waypoint_absolute_localization_error_per_waypoint_list is not None:
+            for waypoint_absolute_localization_error_per_waypoint in waypoint_absolute_localization_error_per_waypoint_list:
+                if waypoint_absolute_localization_error_per_waypoint is not None and 'start_time' in waypoint_absolute_localization_error_per_waypoint:
+                    waypoint_absolute_localization_error_per_waypoint_dict[waypoint_absolute_localization_error_per_waypoint['start_time']] = waypoint_absolute_localization_error_per_waypoint
+                    waypoint_start_times.add(waypoint_absolute_localization_error_per_waypoint['start_time'])
+
         trajectory_length_per_waypoint_dict = dict()
         trajectory_length_per_waypoint_list = get_yaml_by_path(metrics_dict, ['trajectory_length_per_waypoint', 'trajectory_length_per_waypoint_list'])
         if trajectory_length_per_waypoint_list is not None:
@@ -203,6 +225,11 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
             if all_waypoint_relative_localization_metrics is not None:
                 for all_waypoint_relative_localization_metric_name,  all_waypoint_relative_localization_metric_value in all_waypoint_relative_localization_metrics.items():
                     run_record_per_waypoint['waypoint_relative_localization_error_' + all_waypoint_relative_localization_metric_name] = all_waypoint_relative_localization_metric_value
+
+            all_waypoint_absolute_localization_metrics = get_yaml_by_path(waypoint_absolute_localization_error_per_waypoint_dict, [waypoint_start_time])
+            if all_waypoint_absolute_localization_metrics is not None:
+                for all_waypoint_absolute_localization_metric_name,  all_waypoint_absolute_localization_metric_value in all_waypoint_absolute_localization_metrics.items():
+                    run_record_per_waypoint['waypoint_absolute_localization_error_' + all_waypoint_absolute_localization_metric_name] = all_waypoint_absolute_localization_metric_value
 
             all_trajectory_length_metrics = get_yaml_by_path(trajectory_length_per_waypoint_dict, [waypoint_start_time])
             if all_trajectory_length_metrics is not None:

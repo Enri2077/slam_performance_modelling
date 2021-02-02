@@ -16,7 +16,7 @@ from yaml.constructor import ConstructorError
 from performance_modelling_py.utils import print_info, print_error
 from performance_modelling_py.metrics.localization_metrics import trajectory_length_metric, absolute_localization_error_metrics, relative_localization_error_metrics_carmen_dataset, \
     estimated_pose_trajectory_length_metric, relative_localization_error_metrics_for_each_waypoint, geometric_similarity_environment_metric_for_each_waypoint, lidar_visibility_environment_metric_for_each_waypoint, \
-    relative_localization_error_metrics, waypoint_relative_localization_error_metrics_for_each_waypoint, trajectory_length_metric_per_waypoint
+    relative_localization_error_metrics, waypoint_relative_localization_error_metrics_for_each_waypoint, trajectory_length_metric_per_waypoint, waypoint_absolute_localization_error_metrics
 from performance_modelling_py.metrics.computation_metrics import cpu_and_memory_usage_metrics
 
 
@@ -116,6 +116,12 @@ def compute_metrics(run_output_folder, recompute_all_metrics=False):
         if environment_type == 'simulation':
             print_info("waypoint_relative_localization_error (simulation) {}".format(run_id))
             metrics_result_dict['waypoint_relative_localization_error'] = waypoint_relative_localization_error_metrics_for_each_waypoint(estimated_poses_path, ground_truth_poses_path, run_events_file_path)
+
+    # waypoint_absolute_localization_error
+    if recompute_all_metrics or 'waypoint_absolute_localization_error' not in metrics_result_dict:
+        if environment_type == 'simulation':
+            print_info("waypoint_absolute_localization_error (simulation) {}".format(run_id))
+            metrics_result_dict['waypoint_absolute_localization_error'] = waypoint_absolute_localization_error_metrics(estimated_poses_path, ground_truth_poses_path, run_events_file_path)
 
     # absolute_localization_error
     if recompute_all_metrics or 'absolute_localization_error' not in metrics_result_dict:
