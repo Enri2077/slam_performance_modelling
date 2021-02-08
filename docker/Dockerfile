@@ -39,6 +39,7 @@ RUN \
     ros-melodic-map-server \
     ros-melodic-slam-toolbox \
     ros-melodic-gmapping \
+    ros-melodic-hector-slam \
     ros-melodic-amcl \
     ros-melodic-move-base \
     ros-melodic-global-planner \
