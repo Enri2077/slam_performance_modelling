@@ -1,0 +1,19 @@
+base_frame: base_footprint_realistic
+odom_frame: odom_realistic
+scan_topic: scan
+
+map_update_distance_thresh: 0.4
+map_update_angle_thresh: 0.06
+
+output_timing: false
+pub_map_odom_transform: true
+use_tf_scan_transformation: true
+use_tf_pose_start_estimate: false
+
+map_resolution: 0.050
+map_size: 3000
+map_start_x: 0.5
+map_start_y: 0.5
+
+update_factor_free: 0.4
+update_factor_occupied: 0.9

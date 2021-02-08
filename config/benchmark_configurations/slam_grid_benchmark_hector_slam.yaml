@@ -12,23 +12,15 @@ components_configuration:
   supervisor: slam_benchmark_supervisor/slam_benchmark_supervisor.yaml
   slam_toolbox: slam_toolbox/slam_toolbox_online_async.yaml
   gmapping: gmapping/gmapping.yaml
+  hector_slam: hector_slam/hector_slam.yaml
   move_base: move_base/move_base_tb3.yaml
 
 combinatorial_parameters:
-  slam_node: [slam_toolbox]
-  ceres_loss_function: [None]
-  linear_angular_update: [[0.2, 0.1], [0.5, 0.5]]
-  beta: [
-    [0.25, 0.0, 0.25, 0.0], 
-    [0.5, 0.0, 0.5, 0.0], 
-    [0.75, 0.0, 0.75, 0.0], 
-    [1.0, 0.0, 1.0, 0.0], 
-    [1.25, 0.0, 1.25, 0.0], 
-    [1.5, 0.0, 1.5, 0.0], 
-    [1.75, 0.0, 1.75, 0.0],
-  ]
-  laser_scan_max_range: [8.0, 30.0]
-  laser_scan_fov_deg: [180, 359]
+  slam_node: [hector_slam]
+  linear_angular_update: [[0.4, 0.06]]
+  beta: [[0.0, 0.0, 0.0, 0.0], [2.0, 0.0, 2.0, 0.0]]
+  laser_scan_max_range: [3.5, 8.0, 15.0, 30.0]
+  laser_scan_fov_deg: [90, 180, 270, 359]
   map_resolution: [0.05]
   fewer_nav_goals: [true]
   goal_tolerance: [[0.3, 3.142]]

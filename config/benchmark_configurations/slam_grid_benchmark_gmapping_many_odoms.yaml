@@ -27,8 +27,8 @@ combinatorial_parameters:
     [1.5, 0.0, 1.5, 0.0], 
     [1.75, 0.0, 1.75, 0.0],
   ]
-  laser_scan_max_range: [3.5, 30.0]
-  laser_scan_fov_deg: [90, 359]
+  laser_scan_max_range: [8.0, 30.0]
+  laser_scan_fov_deg: [180, 359]
   map_resolution: [0.05]
   fewer_nav_goals: [true]
   goal_tolerance: [[0.3, 3.142]]

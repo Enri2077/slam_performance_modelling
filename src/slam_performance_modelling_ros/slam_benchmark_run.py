@@ -5,7 +5,6 @@ from __future__ import print_function
 
 import os
 import shutil
-import traceback
 
 import rospy
 import yaml
@@ -16,7 +15,6 @@ import numpy as np
 
 from performance_modelling_py.utils import backup_file_if_exists, print_info, print_error
 from performance_modelling_py.component_proxies.ros1_component import Component
-#from slam_performance_modelling_ros.metrics import compute_metrics
 from performance_modelling_py.benchmark_execution.log_software_versions import log_packages_and_repos
 
 
@@ -95,6 +93,7 @@ class BenchmarkRun(object):
         original_supervisor_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['supervisor'])
         original_gmapping_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['gmapping'])
         original_slam_toolbox_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['slam_toolbox'])
+        original_hector_slam_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['hector_slam'])
         original_move_base_configuration_path = path.join(components_configurations_folder, self.benchmark_configuration['components_configuration']['move_base']) if self.environment_type == 'simulation' else None
         original_gazebo_world_model_path = path.join(environment_folder, "gazebo", "gazebo_environment.model") if self.environment_type == 'simulation' else None
         original_gazebo_robot_model_config_path = path.join(environment_folder, "gazebo", "robot", "model.config") if self.environment_type == 'simulation' else None
@@ -105,6 +104,7 @@ class BenchmarkRun(object):
         supervisor_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['supervisor'])
         gmapping_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['gmapping'])
         slam_toolbox_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['slam_toolbox'])
+        hector_slam_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['hector_slam'])
         move_base_configuration_relative_path = path.join("components_configuration", self.benchmark_configuration['components_configuration']['move_base']) if self.environment_type == 'simulation' else None
         gazebo_world_model_relative_path = path.join("components_configuration", "gazebo", "gazebo_environment.model") if self.environment_type == 'simulation' else None
         gazebo_robot_model_config_relative_path = path.join("components_configuration", "gazebo", "robot", "model.config") if self.environment_type == 'simulation' else None
@@ -116,6 +116,7 @@ class BenchmarkRun(object):
         self.supervisor_configuration_path = path.join(self.run_output_folder, supervisor_configuration_relative_path)
         self.gmapping_configuration_path = path.join(self.run_output_folder, gmapping_configuration_relative_path)
         self.slam_toolbox_configuration_path = path.join(self.run_output_folder, slam_toolbox_configuration_relative_path)
+        self.hector_slam_configuration_path = path.join(self.run_output_folder, hector_slam_configuration_relative_path)
         self.move_base_configuration_path = path.join(self.run_output_folder, move_base_configuration_relative_path) if self.environment_type == 'simulation' else None
         self.gazebo_world_model_path = path.join(self.run_output_folder, gazebo_world_model_relative_path) if self.environment_type == 'simulation' else None
         gazebo_robot_model_config_path = path.join(self.run_output_folder, gazebo_robot_model_config_relative_path) if self.environment_type == 'simulation' else None
@@ -173,6 +174,19 @@ class BenchmarkRun(object):
                 os.makedirs(path.dirname(self.slam_toolbox_configuration_path))
             with open(self.slam_toolbox_configuration_path, 'w') as slam_toolbox_configuration_file:
                 yaml.dump(slam_toolbox_configuration, slam_toolbox_configuration_file, default_flow_style=False)
+
+        elif self.slam_node == 'hector_slam':
+            # copy the configuration of hector_slam to the run folder and update its parameters
+            with open(original_hector_slam_configuration_path) as original_hector_slam_configuration_file:
+                hector_slam_configuration = yaml.safe_load(original_hector_slam_configuration_file)
+            hector_slam_configuration['odom_frame'] = "odom_realistic" if self.environment_type == 'simulation' else "odom"
+            hector_slam_configuration['base_frame'] = "base_footprint_realistic" if self.environment_type == 'simulation' else "base_link"
+            hector_slam_configuration['map_update_distance_thresh'] = linear_update
+            hector_slam_configuration['map_update_angle_thresh'] = angular_update
+            if not path.exists(path.dirname(self.hector_slam_configuration_path)):
+                os.makedirs(path.dirname(self.hector_slam_configuration_path))
+            with open(self.hector_slam_configuration_path, 'w') as hector_slam_configuration_file:
+                yaml.dump(hector_slam_configuration, hector_slam_configuration_file, default_flow_style=False)
 
         else:
             raise ValueError()
@@ -267,6 +281,8 @@ class BenchmarkRun(object):
             run_info_dict['local_components_configuration']['gmapping'] = gmapping_configuration_relative_path
         elif self.slam_node == 'slam_toolbox':
             run_info_dict['local_components_configuration']['slam_toolbox'] = slam_toolbox_configuration_relative_path
+        elif self.slam_node == 'hector_slam':
+            run_info_dict['local_components_configuration']['hector_slam'] = hector_slam_configuration_relative_path
         else:
             raise ValueError()
 
@@ -330,6 +346,10 @@ class BenchmarkRun(object):
             slam_params = {
                 'params_file': self.slam_toolbox_configuration_path,
             }
+        elif self.slam_node == 'hector_slam':
+            slam_params = {
+                'params_file': self.hector_slam_configuration_path,
+            }
         else:
             raise ValueError()
 
@@ -359,6 +379,8 @@ class BenchmarkRun(object):
             slam = Component('gmapping', 'slam_performance_modelling', 'gmapping.launch', slam_params)
         elif self.slam_node == 'slam_toolbox':
             slam = Component('slam_toolbox', 'slam_performance_modelling', 'slam_toolbox_online_async.launch', slam_params)
+        elif self.slam_node == 'hector_slam':
+            slam = Component('hector_slam', 'slam_performance_modelling', 'hector_slam.launch', slam_params)
         else:
             raise ValueError()
         ground_truth_map_server = Component('ground_truth_map_server', 'slam_performance_modelling', 'ground_truth_map_server.launch', ground_truth_map_server_params)

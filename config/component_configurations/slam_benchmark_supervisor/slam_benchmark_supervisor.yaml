@@ -4,6 +4,7 @@ initial_pose_std_theta: 0.2617
 goal_tolerance: 0.4
 run_timeout: 7200.0
 waypoint_timeout: 600
+estimated_pose_error_timeout: 30
 ps_snapshot_period: 10.0
 write_estimated_poses_period: 0.1
 robot_radius: 0.2

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="params_file" />
+
+    <arg name="output" default="screen"/>
+
+    <node name="hector_mapping"
+          pkg="hector_mapping"
+          type="hector_mapping"
+          output="$(arg output)">
+        <rosparam file="$(arg params_file)" />
+    </node>
+
+</launch>
+

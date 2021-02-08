@@ -90,6 +90,7 @@ class SlamBenchmarkSupervisor:
         # run parameters
         run_timeout = rospy.get_param('~run_timeout')
         self.waypoint_timeout = rospy.get_param('~waypoint_timeout')
+        self.estimated_pose_error_timeout = rospy.get_param('~estimated_pose_error_timeout')
         ps_snapshot_period = rospy.get_param('~ps_snapshot_period')
         write_estimated_poses_period = rospy.get_param('~write_estimated_poses_period')
         self.ps_pid_father = rospy.get_param('~pid_father')
@@ -116,6 +117,8 @@ class SlamBenchmarkSupervisor:
         self.goal_succeeded_count = 0
         self.goal_failed_count = 0
         self.goal_rejected_count = 0
+        self.estimated_pose_error = False
+        self.first_estimated_pose_error_time = None
 
         # prepare folder structure
         if not path.exists(self.benchmark_data_folder):
@@ -423,10 +426,21 @@ class SlamBenchmarkSupervisor:
                 'y': transform_msg.transform.translation.y,
                 'theta': theta
             }, ignore_index=True)
+            self.estimated_pose_error = False
+            self.first_estimated_pose_error_time = None
 
         # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
         except:
             print_error(traceback.format_exc())
+            if not self.estimated_pose_error:
+                self.estimated_pose_error = True
+                self.first_estimated_pose_error_time = rospy.Time.now()
+
+            if rospy.Time.now() - self.first_estimated_pose_error_time > rospy.Duration.from_sec(self.estimated_pose_error_timeout):
+                print_error("terminating supervisor due to estimated pose error, terminating run")
+                self.write_event('estimated_pose_error')
+                self.write_event('supervisor_finished')
+                rospy.signal_shutdown("estimated_pose_error")
 
     def estimated_pose_correction_callback(self, pose_with_covariance_msg):
         if not self.run_started:
