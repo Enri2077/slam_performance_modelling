@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import sys
+
 print("Python version:", sys.version_info)
 if sys.version_info.major < 3:
     print("Python version less than 3")
@@ -47,7 +48,7 @@ def get_yaml_by_path(yaml_dict, keys):
         return None
 
 
-def collect_data(base_run_folder_path, invalidate_cache=False):
+def collect_data(base_run_folder_path):
 
     base_run_folder = path.expanduser(base_run_folder_path)
     cache_file_path = path.join(base_run_folder, "run_data_per_waypoint_cache.pkl")
@@ -62,17 +63,7 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
     run_folders = sorted(list(filter(is_completed_run_folder, glob.glob(path.abspath(base_run_folder) + '/*'))))
 
     record_list = list()
-    if invalidate_cache or not path.exists(cache_file_path):
-        df = pd.DataFrame()
-        parameter_names = set()
-        cached_run_folders = set()
-    else:
-        print_info("collect_data: updating cache")
-        with open(cache_file_path, 'rb') as f:
-            cache = pickle.load(f)
-        df = cache['df']
-        parameter_names = cache['parameter_names']
-        cached_run_folders = set(df['run_folder'])
+    parameter_names = set()
 
     # collect results from runs not already cached
     print_info("collect_data: reading run data")
@@ -90,8 +81,6 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
         if not path.exists(run_info_file_path):
             print_error("collect_data: run_info file does not exists [{}]".format(run_info_file_path))
             no_output = False
-            continue
-        if run_folder in cached_run_folders:
             continue
 
         run_info = get_yaml(run_info_file_path)
@@ -125,6 +114,23 @@ def collect_data(base_run_folder_path, invalidate_cache=False):
 
         if path.exists(benchmark_data_bag_file_path):
             run_record['run_absolute_bag_completion_time'] = path.getmtime(benchmark_data_bag_file_path)
+
+        if 'run_absolute_start_time' in run_record and 'run_absolute_completion_time' in run_record:
+            run_record['run_execution_time'] = run_record['run_absolute_completion_time'] - run_record['run_absolute_start_time']
+        else:
+            print_error("run_execution_time could not be computed for run {}".format(path.basename(run_folder)))
+            no_output = False
+
+        # collect per run metric results
+        node_names = {
+            'gmapping': 'slam_gmapping',
+            'slam_toolbox': 'async_slam_toolbox_node',
+            'hector_slam': 'hector_mapping',
+        }
+        accumulated_cpu_time = get_yaml_by_path(metrics_dict, ['cpu_and_memory_usage', '{}_accumulated_cpu_time'.format(node_names[run_record['slam_node']])])
+        if accumulated_cpu_time is not None and 'run_execution_time' in run_record:
+            run_record['normalized_cpu_time'] = accumulated_cpu_time / run_record['run_execution_time']
+        run_record['max_memory'] = get_yaml_by_path(metrics_dict, ['cpu_and_memory_usage', '{}_uss'.format(node_names[run_record['slam_node']])])
 
         # collect per waypoint metric results
         waypoint_start_times = set()
@@ -262,17 +268,11 @@ if __name__ == '__main__':
                         default=default_base_run_folder,
                         required=False)
 
-    parser.add_argument('-i', dest='invalidate_cache',
-                        help='If set, all the data is re-read.',
-                        action='store_true',
-                        default=True,  # TODO does nothing, repair or remove
-                        required=False)
-
     args = parser.parse_args()
     import time
     s = time.time()
-    run_data_df, params = collect_data(args.base_run_folder, args.invalidate_cache)
+    run_data_df, params = collect_data(args.base_run_folder)
     pd.options.display.width = 200
-    print(run_data_df)
-    print(run_data_df.columns)
+    print("columns:")
+    print('\n'.join(map(lambda x: '\t' + x, run_data_df.columns)))
     print("collect_data: ", time.time() - s, "s")
