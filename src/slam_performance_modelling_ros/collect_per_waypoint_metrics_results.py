@@ -60,7 +60,8 @@ def collect_data(base_run_folder_path):
     def is_completed_run_folder(p):
         return path.isdir(p) and path.exists(path.join(p, "benchmark_data.bag"))
 
-    run_folders = sorted(list(filter(is_completed_run_folder, glob.glob(path.abspath(base_run_folder) + '/*'))))
+#    run_folders = sorted(list(filter(is_completed_run_folder, glob.glob(path.abspath(base_run_folder) + '/*'))))
+    run_folders = sorted(list(glob.glob(path.abspath(base_run_folder) + '/*')))
 
     record_list = list()
     parameter_names = set()
@@ -130,6 +131,14 @@ def collect_data(base_run_folder_path):
         accumulated_cpu_time = get_yaml_by_path(metrics_dict, ['cpu_and_memory_usage', '{}_accumulated_cpu_time'.format(node_names[run_record['slam_node']])])
         if accumulated_cpu_time is not None and 'run_execution_time' in run_record:
             run_record['normalized_cpu_time'] = accumulated_cpu_time / run_record['run_execution_time']
+        else:
+            if accumulated_cpu_time is None:
+                print_error("accumulated_cpu_time is None")
+                no_output = False
+            if 'run_execution_time' not in run_record:
+                print_error("'run_execution_time' not in run_record")
+                no_output = False
+                
         run_record['max_memory'] = get_yaml_by_path(metrics_dict, ['cpu_and_memory_usage', '{}_uss'.format(node_names[run_record['slam_node']])])
 
         # collect per waypoint metric results
@@ -243,7 +252,7 @@ def collect_data(base_run_folder_path):
                     run_record_per_waypoint['trajectory_length_' + all_trajectory_length_metric_name] = all_trajectory_length_metric_value
 
             record_list.append(run_record_per_waypoint)
-
+            
         print_info("collect_data: reading run data: {}% {}/{} {}".format(int((i + 1)*100/len(run_folders)), i, len(run_folders), path.basename(run_folder)), replace_previous_line=no_output)
         no_output = True
 
@@ -261,7 +270,7 @@ def collect_data(base_run_folder_path):
 if __name__ == '__main__':
     default_base_run_folder = "~/ds/performance_modelling/output/test_slam"
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Execute the analysis of the benchmark results.')
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Collects the results of each run into a pandas dataframe and saves it into a pickled file.')
     parser.add_argument('-r', dest='base_run_folder',
                         help='Folder containing the result the runs. Defaults to {}'.format(default_base_run_folder),
                         type=str,
